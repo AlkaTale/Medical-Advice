@@ -7,5 +7,4 @@ class Index
     {
         return '21212';
     }
-    }
 }
