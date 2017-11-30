@@ -18,19 +18,21 @@ class User extends Controller{
      */
     public function create(Request $request){
         $data = $request->param();
-        //密码加密保存
-        $data['password'] = md5(md5($data['password'] ));
         $data['create_time'] = date("Y-m-d H:i:s");
         //$result = UserModel::create($data);
 
-        //注册成功，保存登录状态
-        if(true !==$this->validate($data,'User')){
+        //加载验证器
+        $valid_result = $this->validate($data,'User');
+        if(true !== $valid_result){
+            return json(['error' => $valid_result]);
+        }
+        else{
+            //密码加密保存
+            $data['password'] = md5(md5($data['password'] ));
             $result = UserModel::create($data);
             $token = Token::create($result->id,$result->password);
             Token::update($result,$token);
             return json(['token' => $token, 'data' => $result]);
         }
     }
-    
-
 }
