@@ -63,7 +63,7 @@ class User extends Controller{
                 if($user->type_id == 1){
                     $profile = $user->user_profiles()->where('id',$profile_id)->find();
                     if($profile){
-                        return 1;
+                        return true;
                     }
                     else
                         return '子账号不存在';
@@ -71,7 +71,7 @@ class User extends Controller{
                 else if($user->type_id == 2){
                     $profile = $user->doctor_profile()->where('id',$profile_id)->find();
                     if($profile){
-                        return 1;
+                        return true;
                     }
                     else
                         return '子账号不存在';
