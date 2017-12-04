@@ -62,18 +62,19 @@ class Util{
      */
     public static function upload(Request $request)
     {
-        // 获取表单上传文件
-        $file = $request->file('file');
-        if (empty($file)) {
-            return 0;
+        $files = request()->file('image');
+        $results = [];
+        foreach($files as $file){
+            // 移动到框架应用根目录/public/uploads/ 目录下
+            $info = $file->validate(['ext'=>'jpg,png,gif'])->move(ROOT_PATH . 'public' . DS . 'uploads');
+            if($info){
+                // 成功上传后 获取上传信息
+                $results[] =  $info->getSavename();
+            }else{
+                // 上传失败获取错误信息
+                $results[] =  false;
+            }
         }
-        // 移动到框架应用根目录/public/uploads/ 目录下
-        $info = $file->move(ROOT_PATH . 'public' . DS . 'uploads');
-        if ($info) {
-            return $info->getRealPath();
-        } else {
-            // 上传失败获取错误信息
-            //$this->error($file->getError());
-        }
+        return $results;
     }
 }
