@@ -10,4 +10,9 @@ class UserProfile extends Model{
     {
         return $this->belongsTo('User');
     }
+
+    public function medical_records()
+    {
+        return $this->hasMany('MedicalRecord');
+    }
 }
