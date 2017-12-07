@@ -13,6 +13,6 @@ class UserProfile extends Model{
 
     public function medical_records()
     {
-        return $this->hasMany('MedicalRecord');
+        return $this->hasMany('MedicalRecord','profile_id');
     }
 }

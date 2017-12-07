@@ -35,4 +35,29 @@ class Medicalrecord extends Controller{
             return json(['succ' => 0, 'error' => '登录已失效']);
         }
     }
+
+    /*
+     * 删除病历记录
+     * 接口地址：api/Medicalrecord/delete
+     * 参数：token,profile_id,record_id
+     */
+    public function delete(Request $request){
+        $data = $request->param();
+
+        if(Util::token_validate($data['token'],$data['profile_id'])){
+            $profile = UserProfile::get($data['profile_id']);
+            $record = $profile->medical_records()->where('id',$data['record_id'])->find();
+            
+            if($record){
+                $record->delete();
+                return json(['succ' => 1]);
+            }
+            else
+                return json(['succ' => 0, 'error' => '病历不存在']);
+        }
+        else{
+            return json(['succ' => 0, 'error' => '登录已失效']);
+        }
+
+    }
 }
