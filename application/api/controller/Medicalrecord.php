@@ -87,4 +87,38 @@ class Medicalrecord extends Controller{
             return json(['succ' => 0, 'error' => $msg->msg]);
         }
     }
+
+    /*
+     * 查询病历记录
+     * 接口地址：api/Medicalrecord/
+     * 参数：token,profile_id,record_id(可选)
+     * 注意：record_id不填则获取整个列表
+     */
+    public function index(Request $request){
+        $data = $request->param();
+        //单个
+        if($data['record_id'] > 0){
+            $msg = Util::token_validate($data['token'],$data['profile_id']);
+            if($msg->succ){
+                $profile = UserProfile::get(['id' => $data['profile_id']]);
+                $record = $profile->medical_records()->where('id',$data['record_id'])->find();
+                return json($record);
+            }
+            else{
+                return json(['succ' => 0, 'error' => $msg->msg]);
+            }
+        }
+        //列表
+        else{
+            $msg = Util::token_validate($data['token']);
+            if($msg->succ){
+                $profile = UserProfile::get(['id' => $data['profile_id']]);
+                $list = $profile->medical_records()->selectOrFail();
+                return json($list);
+            }
+            else{
+                return json(['succ' => 0, 'error' => $msg->msg]);
+            }
+        }
+    }
 }

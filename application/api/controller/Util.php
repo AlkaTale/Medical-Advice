@@ -33,7 +33,7 @@ class Util{
             //验证子账号是否属于用户
             if($profile_id == -1){
                 //无需验证子账号
-                return 1;
+                return new ErrMsg(true,'');
             }
             else{
                 //根据患者/医生作不同处理
@@ -55,6 +55,8 @@ class Util{
                 }
             }
         }
+        else
+            return new ErrMsg(false,'登录已过期');
     }
 
     /**
