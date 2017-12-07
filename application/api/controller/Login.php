@@ -40,9 +40,9 @@ class Login extends Controller{
             $token = Token::create($user->id,$user->password);
             Token::update($user,$token);
             
-            return json(['token' => $token, 'data' => $user]);
+            return json(['succ' => 1,'token' => $token, 'data' => $user]);
         }else{
-            return json(['error' => '登录失败'], 404);
+            return json(['succ' => 0,'error' => '登录失败'], 404);
         }
     }
 }

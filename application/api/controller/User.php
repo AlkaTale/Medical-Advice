@@ -25,7 +25,7 @@ class User extends Controller{
         //加载验证器
         $valid_result = $this->validate($data,'User');
         if(true !== $valid_result){
-            return json(['error' => $valid_result]);
+            return json(['succ' => 0,'error' => $valid_result]);
         }
         else{
             //密码加密保存
@@ -33,7 +33,7 @@ class User extends Controller{
             $result = UserModel::create($data);
             $token = Token::create($result->id,$result->password);
             Token::update($result,$token);
-            return json(['token' => $token, 'data' => $result]);
+            return json(['succ' => 1,'token' => $token, 'data' => $result]);
         }
     }
 }

@@ -24,7 +24,8 @@ class Medicalrecord extends Controller{
         $data = $request->param();
         $data['create_time'] = date("Y-m-d H:i:s");
 
-        if(Util::token_validate($data['token'],$data['profile_id'])){
+        $msg = Util::token_validate($data['token'],$data['profile_id']);
+        if($msg->succ){
             $result = MedicalRecordModel::create($data);
             if($result)
                 return json(['succ' => 1]);
@@ -32,7 +33,7 @@ class Medicalrecord extends Controller{
                 return json(['succ' => 0, 'error' => '新建病历失败']);
         }
         else{
-            return json(['succ' => 0, 'error' => '登录已失效']);
+            return json(['succ' => 0, 'error' => $msg->msg]);
         }
     }
 
@@ -44,7 +45,8 @@ class Medicalrecord extends Controller{
     public function delete(Request $request){
         $data = $request->param();
 
-        if(Util::token_validate($data['token'],$data['profile_id'])){
+        $msg = Util::token_validate($data['token'],$data['profile_id']);
+        if($msg->succ){
             $profile = UserProfile::get($data['profile_id']);
             $record = $profile->medical_records()->where('id',$data['record_id'])->find();
             
@@ -56,8 +58,33 @@ class Medicalrecord extends Controller{
                 return json(['succ' => 0, 'error' => '病历不存在']);
         }
         else{
-            return json(['succ' => 0, 'error' => '登录已失效']);
+            return json(['succ' => 0, 'error' => $msg->msg]);
         }
+    }
 
+    /*
+     * 更新病历记录
+     * 接口地址：api/Medicalrecord/update
+     * 参数：token,visit_time,hospital,decription
+     * 注意：未修改的属性也要将原值传回！
+     */
+    public function update(Request $request){
+        $data = $request->param();
+
+        $msg = Util::token_validate($data['token'],$data['profile_id']);
+        if($msg->succ){
+            $profile = UserProfile::get($data['profile_id']);
+            $record = $profile->medical_records()->where('id',$data['record_id'])->find();
+
+            if($record){
+                $record->allowField(['visit_time','hospital','decription'])->save($_POST);
+                return json(['succ' => 1]);
+            }
+            else
+                return json(['succ' => 0, 'error' => '病历不存在']);
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
+        }
     }
 }

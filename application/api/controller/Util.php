@@ -7,6 +7,7 @@
  */
 namespace app\api\controller;
 
+use app\api\model\ErrMsg;
 use app\api\model\User as UserModel;
 use think\Controller;
 use think\Request;
@@ -26,7 +27,7 @@ class Util{
             if($user->token_valid_time != 0){
                 $temp = date("Y-m-d G:H:s",strtotime("-".$user->token_valid_time." minutes"));
                 if($user->token_create_time <= $temp){
-                    return '登录已过期';
+                    return new ErrMsg(false,'登录已过期');
                 }
             }
             //验证子账号是否属于用户
@@ -39,18 +40,18 @@ class Util{
                 if($user->type_id == 1){
                     $profile = $user->user_profiles()->where('id',$profile_id)->find();
                     if($profile){
-                        return true;
+                        return new ErrMsg(true,$profile);
                     }
                     else
-                        return '子账号不存在';
+                        return new ErrMsg(false,'子账号不存在');
                 }
                 else if($user->type_id == 2){
                     $profile = $user->doctor_profile()->where('id',$profile_id)->find();
                     if($profile){
-                        return true;
+                        return new ErrMsg(true,'');
                     }
                     else
-                        return '子账号不存在';
+                        return new ErrMsg(false,'子账号不存在');
                 }
             }
         }
