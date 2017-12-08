@@ -14,4 +14,8 @@ class MedicalRecord extends Model{
     {
         return $this->belongsTo('UserProfile');
     }
+
+    public function record_image(){
+        return $this->hasOne('RecordImage');
+    }
 }

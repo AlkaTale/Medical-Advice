@@ -11,6 +11,7 @@ use app\api\model\ErrMsg;
 use app\api\model\User as UserModel;
 use think\Controller;
 use think\Request;
+use think\Image;
 
 class Util{
 
@@ -72,10 +73,11 @@ class Util{
             $info = $file->validate(['ext'=>'jpg,png,gif'])->move(ROOT_PATH . 'public' . DS . 'uploads');
             if($info){
                 // 成功上传后 获取上传信息
-                $results[] =  $info->getSavename();
+                $results[] = new ErrMsg(true,$info->getSavename());
+                //$file->thumb(150, 150)->save('./thumb.png');
             }else{
                 // 上传失败获取错误信息
-                $results[] =  false;
+                $results[] = new ErrMsg(false,$file->getError());
             }
         }
         return $results;
