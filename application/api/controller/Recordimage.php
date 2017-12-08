@@ -8,7 +8,6 @@
 
 namespace app\api\controller;
 
-use app\api\model\MedicalRecord as MedicalRecordModel;
 use app\api\model\RecordImage as RecordImageModel;
 use app\api\model\UserProfile;
 use think\Controller;
@@ -19,7 +18,7 @@ class Recordimage extends Controller{
     /*
      * 上传
      * 调用：api/Recordimage/upload
-     * 参数：image,profile_id,token,record_id
+     * 参数：image,profile_id,token,record_id,type_id
      */
     public function upload(Request $request){
         $data = $request->param();
@@ -35,7 +34,7 @@ class Recordimage extends Controller{
                 foreach ($results as $result){
                     if (false !== $result->succ){
                         $data['link'] = $result->msg;
-                        MedicalRecordModel::create($data);
+                        RecordImageModel::create($data);
                     }
                 }
                 return json($results);
