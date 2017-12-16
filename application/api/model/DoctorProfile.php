@@ -10,4 +10,8 @@ class DoctorProfile extends Model{
     {
         return $this->belongsTo('User');
     }
+    public function schedule()
+    {
+        return $this->hasMany('Schedule');
+    }
 }
