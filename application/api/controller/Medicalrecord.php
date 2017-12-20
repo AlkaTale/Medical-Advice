@@ -53,7 +53,7 @@ class Medicalrecord extends Controller{
             if($record){
                 $record->delete();
                 return json(['succ' => 1]);
-            }
+        }
             else
                 return json(['succ' => 0, 'error' => '病历不存在']);
         }
