@@ -16,7 +16,7 @@ use think\Request;
 class Login extends Controller{
     
     public function index(Request $request){
-
+        
         //todo:加密保存用户密码，暂用2次MD5
         $password = md5(md5(input('password')));
 
@@ -39,10 +39,9 @@ class Login extends Controller{
             //token保存登录状态
             $token = Token::create($user->id,$user->password);
             Token::update($user,$token);
-            
             return json(['succ' => 1,'token' => $token, 'data' => $user]);
         }else{
-            return json(['succ' => 0,'error' => '登录失败'], 404);
+            return json(['succ' => 0,'error' => '登录失败']);
         }
     }
 }
