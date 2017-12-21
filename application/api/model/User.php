@@ -19,4 +19,9 @@ class User extends Model{
     public function user_type(){
         return $this->hasOne('UserType');
     }
+
+    //phone读取器
+    protected function getPhoneAttr($phone){
+        return substr_replace($phone, '******', 3, 6);
+    }
 }

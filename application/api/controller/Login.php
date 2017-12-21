@@ -39,6 +39,8 @@ class Login extends Controller{
             //token保存登录状态
             $token = Token::create($user->id,$user->password);
             Token::update($user,$token);
+            //防止返回密码
+            $user->password = "";
             return json(['succ' => 1,'token' => $token, 'data' => $user]);
         }else{
             return json(['succ' => 0,'error' => '登录失败']);
