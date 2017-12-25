@@ -8,6 +8,7 @@ namespace app\api\controller;
 use app\api\model\User as UserModel;
 use think\Controller;
 use think\Request;
+use think\Image;
 
 
 class User extends Controller{
@@ -34,6 +35,45 @@ class User extends Controller{
             $token = Token::create($result->id,$result->password);
             Token::update($result,$token);
             return json(['succ' => 1,'token' => $token, 'data' => $result]);
+        }
+    }
+
+    /*
+     * 上传头像
+     * 接口地址：api/User/updateavatar
+     * 参数：token
+     */
+    public function updateavatar(Request $request){
+        $data = $request->param();
+        //检查登录状态
+        $msg = Util::token_validate($data['token']);
+        if($msg->succ){
+            //调用公共函数保存原图
+            $results = Util::upload($request);
+            if($results[0]->succ){
+                //根据参数裁剪原图
+                $image = Image::open('./public/uploads/'.$results[0]->msg);
+                //解析参数
+                $avatar_data = json_decode($data['avatar_data']);
+                $image->crop($avatar_data->height,$avatar_data->width,$avatar_data->x,$avatar_data->y);
+                $image->rotate($avatar_data->rotate);
+                //保存裁剪后图片
+                $image->save(ROOT_PATH . 'public/uploads/' . $results[0]->msg);
+                //保存到数据库
+                $user = UserModel::get(['token' => $data['token']]);
+                $user->avatar = $results[0]->msg;
+                if (false !== $user->save()) {
+                    return json(['succ' => 1]);
+                } else {
+                    return json(['succ' => 0, 'error' => '更新头像失败']);
+                }
+            }
+            else{
+                return json(['succ' => 0, 'error' => $results[0]->msg]);
+            }
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
         }
     }
 }
