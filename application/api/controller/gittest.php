@@ -6,9 +6,9 @@
  * Time: 23:33
  */
 
-1gitTest(commit1);
+1-5gitTest(commit5);
 2gitTest(commit1);
 3gitTest(commit1);
-4-3gitTest(commit3);
+4-5gitTest(commit5);
 5gitTest(commit1);
 6-3gitTest(commit3);
