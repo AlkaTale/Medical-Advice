@@ -14,6 +14,25 @@ use think\Image;
 class User extends Controller{
 
     /*
+     * 获取用户信息
+     * 接口地址：api/User/
+     * 参数：token
+     */
+    public function index(Request $request){
+        $data = $request->param();
+        //检查登录状态
+        $msg = Util::token_validate($data['token']);
+        if($msg->succ){
+            $user = UserModel::get(['token' => $data['token']]);
+            //防止返回密码
+            $user->password = "";
+            return json(['succ' => 1, 'data' => $user]);
+        }
+        else
+            return json(['succ' => 0, 'error' => $msg->msg]);
+    }
+
+    /*
      * 注册账户
      * 接口地址：api/User/create
      * 参数：nickname,password,phone,type_id
@@ -63,7 +82,7 @@ class User extends Controller{
                 $user = UserModel::get(['token' => $data['token']]);
                 $user->avatar = $results[0]->msg;
                 if (false !== $user->save()) {
-                    return json(['succ' => 1]);
+                    return json(['succ' => 1, 'result' => $results[0]->msg]);
                 } else {
                     return json(['succ' => 0, 'error' => '更新头像失败']);
                 }
