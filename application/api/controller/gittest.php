@@ -7,7 +7,8 @@
  */
 
 
-gitTest(commit8);
+
+1-8gitTest(commit);
 2gitTest(commit1);
 3gitTest(commit1);
 4-8gitTest(commit7);
