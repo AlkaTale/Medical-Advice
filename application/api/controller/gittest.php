@@ -11,5 +11,5 @@
 2gitTest(commit1);
 3gitTest(commit1);
 4-8gitTest(commit7);
-5gitTest(commit1);
+5-9gitTest(commit9);
 6-8gitTest(commit8);
