@@ -49,7 +49,7 @@ class Util{
                 else if($user->type_id == 2){
                     $profile = $user->doctor_profile()->where('id',$profile_id)->find();
                     if($profile){
-                        return new ErrMsg(true,'');
+                        return new ErrMsg(true,$profile);
                     }
                     else
                         return new ErrMsg(false,'子账号不存在');
