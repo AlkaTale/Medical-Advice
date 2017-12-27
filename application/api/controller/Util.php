@@ -66,7 +66,10 @@ class Util{
      */
     public static function upload(Request $request)
     {
-        $files = request()->file('image');
+        $files = request()->file();
+        if ($files == null){
+            return false;
+        }
         $results = [];
         foreach($files as $file){
             // 移动到框架应用根目录/public/uploads/ 目录下
