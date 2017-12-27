@@ -24,25 +24,26 @@
             //单个
             if($data['profile_id'] > 0){
                 //验证token
-                if(Util::token_validate($data['token'],$data['profile_id'])){
-                    $user = User::get(['token' => $data['token']]);
-                    $profile = $user->user_profiles()->where('id',$data['profile_id'])->find();
+                $msg = Util::token_validate($data['token'],$data['profile_id']);
+                if($msg->succ){
+                    $profile = $msg->msg;
                     return json($profile);
                 }
                 else{
-                    return json(['error' => '登录已失效']);
+                    return json(['error' => $msg->msg]);
                 }
             }
             //列表
             else{
                 //验证token
-                if(Util::token_validate($data['token'])){
-                    $user = User::get(['token' => $data['token']]);
+                $msg = Util::token_validate($data['token']);
+                if($msg->succ){
+                    $user = $msg->msg;
                     $list = $user->user_profiles()->selectOrFail();
                     return json($list);
                 }
                 else{
-                    return json(['error' => '登录已失效']);
+                    return json(['error' => $msg->msg]);
                 }
             }
         }

@@ -16,7 +16,7 @@ use think\Image;
 class Util{
 
     /*
-     * 检查用户登录状态
+     * 查询用户登录状态和账号信息
      * 参数：token,profile_id（可选）
      * 返回值:true（通过）、string（错误信息）
      */
@@ -34,12 +34,14 @@ class Util{
             //验证子账号是否属于用户
             if($profile_id == -1){
                 //无需验证子账号
-                return new ErrMsg(true,'');
+                return new ErrMsg(true,$user);
             }
             else{
                 //根据患者/医生作不同处理
                 if($user->type_id == 1){
                     $profile = $user->user_profiles()->where('id',$profile_id)->find();
+                    dump($user->getLastSql());
+
                     if($profile){
                         return new ErrMsg(true,$profile);
                     }
@@ -47,7 +49,8 @@ class Util{
                         return new ErrMsg(false,'子账号不存在');
                 }
                 else if($user->type_id == 2){
-                    $profile = $user->doctor_profile()->where('id',$profile_id)->find();
+                    $profile = $user->doctor_profile()->find();
+                    dump($user->getLastSql());
                     if($profile){
                         return new ErrMsg(true,$profile);
                     }

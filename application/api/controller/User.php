@@ -23,10 +23,7 @@ class User extends Controller{
         //检查登录状态
         $msg = Util::token_validate($data['token']);
         if($msg->succ){
-            $user = UserModel::get(['token' => $data['token']]);
-            //防止返回密码
-            $user->password = "";
-            return json(['succ' => 1, 'data' => $user]);
+            return json(['succ' => 1, 'data' => $msg->msg]);
         }
         else
             return json(['succ' => 0, 'error' => $msg->msg]);
@@ -79,7 +76,7 @@ class User extends Controller{
                 //保存裁剪后图片
                 $image->save(ROOT_PATH . 'public/uploads/' . $results[0]->msg);
                 //保存到数据库
-                $user = UserModel::get(['token' => $data['token']]);
+                $user = $msg->msg;
                 $user->avatar = $results[0]->msg;
                 if (false !== $user->save()) {
                     return json(['succ' => 1, 'result' => $results[0]->msg]);

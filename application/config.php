@@ -20,6 +20,11 @@ return [
     'app_debug'              => true,
     // 应用Trace
     'app_trace'              => false,
+    // 设置Trace显示方式
+    'trace' => [
+        // 在当前Html页面显示Trace信息
+        'type' => 'html',
+    ],
     // 应用模式状态
     'app_status'             => '',
     // 是否支持多模块

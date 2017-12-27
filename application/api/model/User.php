@@ -13,7 +13,7 @@ class User extends Model{
 
     public function doctor_profile(){
         //医生和医生资料的一对一关系
-        return $this->hasOne('DoctorProfile');
+        return $this->hasMany('DoctorProfile','user_id');
     }
 
     public function user_type(){
@@ -23,5 +23,10 @@ class User extends Model{
     //phone读取器
     protected function getPhoneAttr($phone){
         return substr_replace($phone, '******', 3, 6);
+    }
+
+    //password读取器
+    protected function getPasswordAttr($password){
+        return '';
     }
 }

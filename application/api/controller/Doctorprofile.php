@@ -49,10 +49,10 @@ class Doctorprofile extends Controller
         }
     }
     /*
-* 医生增加（doctor_profile表）
-* 接口地址：api/Doctorprofile
-* 参数：token,id，name,sex，age,history,
-*/
+    * 医生增加（doctor_profile表）
+    * 接口地址：api/Doctorprofile
+    * 参数：token,id，name,sex，age,history,
+    */
     public function create(Request $request){
         $data = $request->param();
         $data['create_time'] = date("Y-m-d H:i:s");
