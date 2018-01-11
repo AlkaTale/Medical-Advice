@@ -40,8 +40,6 @@ class Util{
                 //根据患者/医生作不同处理
                 if($user->type_id == 1){
                     $profile = $user->user_profiles()->where('id',$profile_id)->find();
-                    dump($user->getLastSql());
-
                     if($profile){
                         return new ErrMsg(true,$profile);
                     }
@@ -50,7 +48,6 @@ class Util{
                 }
                 else if($user->type_id == 2){
                     $profile = $user->doctor_profile()->find();
-                    dump($user->getLastSql());
                     if($profile){
                         return new ErrMsg(true,$profile);
                     }

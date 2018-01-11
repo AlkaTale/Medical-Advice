@@ -13,7 +13,7 @@ class User extends Model{
 
     public function doctor_profile(){
         //医生和医生资料的一对一关系
-        return $this->hasMany('DoctorProfile','user_id');
+        return $this->hasMany('DoctorProfile');
     }
 
     public function user_type(){

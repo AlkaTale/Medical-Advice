@@ -7,7 +7,7 @@ use think\Model;
 class UserProfile extends Model{
 
     protected $field = [
-        'name','age','sex','history','create_time'
+        'name','birth','sex','address','phone','create_time','user_id'
     ];
 
     public function user()

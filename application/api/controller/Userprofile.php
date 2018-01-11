@@ -27,7 +27,7 @@
                 $msg = Util::token_validate($data['token'],$data['profile_id']);
                 if($msg->succ){
                     $profile = $msg->msg;
-                    return json($profile);
+                    return json(['succ' => 1, 'data' => $profile]);
                 }
                 else{
                     return json(['error' => $msg->msg]);
@@ -62,6 +62,7 @@
                 return json(['succ' => 0,'error' => $msg->msg]);
             }
             else{
+                $data['user_id'] = $msg->msg['id'];
                 $result = UserProfileModel::create($data);
 
                 return json(['succ' => 1, 'data' => $result]);//'token' => $token,删除
@@ -104,7 +105,7 @@
                 if (Util::token_validate($data['token'], $data['profile_id'])) {
                     $user = UserProfileModel::get(['id' => $data['profile_id']]);
                     if ($user) {
-                        $user->allowField(['name','sex','age','history'])->save($_POST);
+                        $user->allowField(['name','birth','sex','address','phone','create_time'])->save($_POST);
                         return json(['succ' => 1]);
                     }else
                         return json(['succ' => 0, 'error' => '子用户不存在']);
