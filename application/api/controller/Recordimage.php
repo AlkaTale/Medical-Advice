@@ -26,7 +26,7 @@ class Recordimage extends Controller{
 
         $msg = Util::token_validate($data['token'],$data['profile_id']);
         if($msg->succ){
-            $profile = UserProfile::get($data['profile_id']);
+            $profile = $msg->msg;
             $record = $profile->medical_records()->where('id',$data['record_id'])->find();
             
             if($record){
@@ -37,7 +37,35 @@ class Recordimage extends Controller{
                         RecordImageModel::create($data);
                     }
                 }
-                return json($results);
+                return json(['succ' => 1, 'data' => $results]);
+            }
+            else
+                return json(['succ' => 0, 'error' => '病历不存在']);
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
+        }
+    }
+
+    /*
+     * 查询
+     * 调用：api/Recordimage/
+     * 参数：profile_id,token,record_id
+     */
+    public function index(Request $request){
+        $data = $request->param();
+        $msg = Util::token_validate($data['token'],$data['profile_id']);
+
+        if($msg->succ){
+            $profile = $msg->msg;
+            $record = $profile->medical_records()->where('id',$data['record_id'])->find();
+
+            if($record){
+                $results = RecordImageModel::get(['record_id' => $data['record_id']]);
+                if ($results)
+                    return json(['succ' => 1, 'data' => $results]);
+                else
+                    return json(['succ' => 0, 'error' => '暂无病历图片']);
             }
             else
                 return json(['succ' => 0, 'error' => '病历不存在']);
