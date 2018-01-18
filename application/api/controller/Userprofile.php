@@ -40,7 +40,7 @@
                 if($msg->succ){
                     $user = $msg->msg;
                     $list = $user->user_profiles()->selectOrFail();
-                    return json($list);
+                    return json(['succ' => 1, 'data' => $list]);
                 }
                 else{
                     return json(['error' => $msg->msg]);

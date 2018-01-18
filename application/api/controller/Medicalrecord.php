@@ -28,7 +28,7 @@ class Medicalrecord extends Controller{
         if($msg->succ){
             $result = MedicalRecordModel::create($data);
             if($result)
-                return json(['succ' => 1]);
+                return json(['succ' => 1 ,'data' => $result['id']]);
             else
                 return json(['succ' => 0, 'error' => '新建病历失败']);
         }

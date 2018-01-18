@@ -12,6 +12,7 @@ use app\api\model\RecordImage as RecordImageModel;
 use app\api\model\UserProfile;
 use think\Controller;
 use think\Request;
+use think\Db;
 
 class Recordimage extends Controller{
 
@@ -28,7 +29,6 @@ class Recordimage extends Controller{
         if($msg->succ){
             $profile = $msg->msg;
             $record = $profile->medical_records()->where('id',$data['record_id'])->find();
-            
             if($record){
                 $results = Util::upload($request);
                 foreach ($results as $result){
@@ -61,11 +61,12 @@ class Recordimage extends Controller{
             $record = $profile->medical_records()->where('id',$data['record_id'])->find();
 
             if($record){
-                $results = RecordImageModel::get(['record_id' => $data['record_id']]);
-                if ($results)
-                    return json(['succ' => 1, 'data' => $results]);
-                else
+                try{
+                    $results = $record->record_images()->selectOrFail();
+                }catch (\Exception $e){
                     return json(['succ' => 0, 'error' => '暂无病历图片']);
+                }
+                return json(['succ' => 1, 'data' => $results]);
             }
             else
                 return json(['succ' => 0, 'error' => '病历不存在']);
@@ -73,5 +74,10 @@ class Recordimage extends Controller{
         else{
             return json(['succ' => 0, 'error' => $msg->msg]);
         }
+    }
+
+    public function imagetype(){
+        $result = Db::name('record_type')->selectOrFail();
+        return json($result);
     }
 }

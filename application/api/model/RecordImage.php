@@ -2,6 +2,7 @@
 
 namespace app\api\model;
 use think\Model;
+use think\Db;
 
 //病历图片模型类
 class RecordImage extends Model{
@@ -13,5 +14,10 @@ class RecordImage extends Model{
     public function medical_record()
     {
         return $this->belongsTo('MedicalRecord');
+    }
+
+    public function getTypeIdAttr($type_id)
+    {
+        return Db::name('record_type')->where('id','=',$type_id)->value('type');
     }
 }
