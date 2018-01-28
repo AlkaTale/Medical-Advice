@@ -12,6 +12,7 @@ use app\api\model\DoctorProfile as DoctorProfileModel;
 use app\api\model\User;
 use think\Controller;
 use think\Request;
+use think\Db;
 
 class Doctorprofile extends Controller
 {
@@ -116,5 +117,41 @@ class Doctorprofile extends Controller
 
     }
 
+    /*
+    * 医生列表和排班查询
+    * 接口地址：api/Doctorprofile/dutylist
+    * 参数：department_id(为0则全部选择)
+    */
+    //todo:分页加载
+    public function dutylist(Request $request)
+    {
+        $result = [];
+        $r_data = $request->param();
+        $d_id = $r_data['department_id'];
+        if($d_id == 0){
+            $dp_list =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+                ->view('doctor_type',['type'=>'typename'],'doctor_profile.type = doctor_type.id')
+                ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+                ->limit(10)
+                ->select();
+        }
+        else{
+            $dp_list =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+                ->view('doctor_type',['type'=>'typename'],'doctor_profile.type = doctor_type.id')
+                ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+                ->where('department_id','=',$d_id)
+                ->limit(10)
+                ->select();
+        }
+        foreach ($dp_list as $dp){
+            $time_list = Db::view('schedule','id,doctor_id,number')
+                ->view('time_range',['range','flag'],'schedule.time_range_id = time_range.id')
+                ->where('doctor_id','=',$dp['id'])
+                ->select();
+            $dp['time_list'] = $time_list;
+            $result[] = $dp;
+        }
+        return json($result);
+    }
 
 }
