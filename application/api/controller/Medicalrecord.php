@@ -113,8 +113,12 @@ class Medicalrecord extends Controller{
             $msg = Util::token_validate($data['token']);
             if($msg->succ){
                 $profile = UserProfile::get(['id' => $data['profile_id']]);
-                $list = $profile->medical_records()->selectOrFail();
-                return json($list);
+                try{
+                    $list = $profile->medical_records()->selectOrFail();
+                    return json(['succ' => 1, 'data' => $list]);
+                }catch (\Exception $e){
+                    return json(['succ' => 0, 'error' => '暂无病历']);
+                }
             }
             else{
                 return json(['succ' => 0, 'error' => $msg->msg]);

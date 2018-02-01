@@ -130,23 +130,26 @@ class Doctorprofile extends Controller
         $d_id = $r_data['department_id'];
         if($d_id == 0){
             $dp_list =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
-                ->view('doctor_type',['type'=>'typename'],'doctor_profile.type = doctor_type.id')
+                ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
                 ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
                 ->limit(10)
                 ->select();
         }
         else{
             $dp_list =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
-                ->view('doctor_type',['type'=>'typename'],'doctor_profile.type = doctor_type.id')
+                ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
                 ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
                 ->where('department_id','=',$d_id)
                 ->limit(10)
                 ->select();
         }
         foreach ($dp_list as $dp){
-            $time_list = Db::view('schedule','id,doctor_id,number')
+            $time_list = Db::view('schedule','id,doctor_id,day,number')
                 ->view('time_range',['range','flag'],'schedule.time_range_id = time_range.id')
-                ->where('doctor_id','=',$dp['id'])
+                ->where([
+                    'doctor_id' => ['=',$dp['id']],
+                    'schedule.status' => ['=',1]
+                ])
                 ->select();
             $dp['time_list'] = $time_list;
             $result[] = $dp;
@@ -154,4 +157,35 @@ class Doctorprofile extends Controller
         return json($result);
     }
 
+    /*
+    * 单个医生排班查询
+    * 接口地址：api/Doctorprofile/doctorduty
+    * 参数：doctor_id、day、flag(上/下午)
+    */
+    public function doctorduty(Request $request)
+    {
+        $r_data = $request->param();
+        $d_id = $r_data['doctor_id'];
+        $flag = $r_data['flag'];
+        $day = $r_data['day'];
+        $dp =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+            ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
+            ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+            ->where('doctor_profile.id','=',$d_id)
+            ->find();
+
+        $time_list = Db::view('schedule','id,doctor_id,day,number')
+            ->view('time_range',['range','flag'],'schedule.time_range_id = time_range.id')
+            ->where([
+                'doctor_id' => ['=',$d_id],
+                'schedule.status' => ['=',1],
+                'day' => ['=',$day],
+                'flag' => ['=',$flag],
+                'number' => ['>', 0]
+            ])
+            ->select();
+        $dp['time_list'] = $time_list;
+
+        return json($dp);
+    }
 }
