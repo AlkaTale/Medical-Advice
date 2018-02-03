@@ -15,6 +15,6 @@ class Order extends Model{
 
     protected $field = [
         'profile_id','doctor_id','appointment_date','appointment_time',
-        'price','create_time'
+        'price','create_time','disease_input'
     ];
 }

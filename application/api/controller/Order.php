@@ -46,18 +46,74 @@ class Order extends Controller{
             $result = OrderModel::create($data);
             if($result){
                 //病历
-                foreach ($data['record_id'] as $item){
-                    $o_data = [];
-                    $o_data['order_id'] = $result['id'];
-                    $o_data['record_id'] = $item;
-                    OrderMrecord::create($o_data);
+                try{
+                    foreach ($data['record_id'] as $item){
+                        $o_data = [];
+                        $o_data['order_id'] = $result['id'];
+                        $o_data['record_id'] = $item;
+                        OrderMrecord::create($o_data);
+                    }
+                }catch (\Exception $e){
+                    //todo:未提交病历
                 }
-                return json(['succ' => 1 ,'data' => $result]);
+
+                return json(['succ' => 1 ,'data' => $result['id']]);
             }
             else
                 return json(['succ' => 0, 'error' => '预约失败']);
         }
         else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
+        }
+    }
+
+    /*
+     * 查询订单
+     * 接口地址：api/order/
+     * 参数：token,profile_id...
+     */
+    public function index(Request $request){
+        $data = $request->param();
+
+        try{
+            $o_id = $data['order_id'];
+        }catch (\Exception $e){
+            $o_id = 0;
+        }
+
+        $msg = Util::token_validate($data['token'],$data['profile_id']);
+        if($msg->succ){
+            if($o_id > 0){
+                $order = Db::view('order','id,appointment_date,disease_input,price,record,advice,create_time')
+                    ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
+                    ->view('doctor_profile',['name' => 'doctorname'],'doctor_profile.id = order.doctor_id')
+                    ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
+                    ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
+                    ->view('order_status',['status'],'order_status.id = order.status')
+                    ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+                    ->where([
+                        'order.id' => ['=',$o_id],
+                        'order.profile_id' => ['=',$data['profile_id']]
+                    ])
+                    ->find();
+                return json(['succ' => 1 ,'data' => $order]);
+            }
+            else{
+                $order = Db::view('order','id,appointment_date,disease_input,price,record,advice,create_time')
+                    ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
+                    ->view('doctor_profile',['name' => 'doctorname'],'doctor_profile.id = order.doctor_id')
+                    ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
+                    ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
+                    ->view('order_status',['status'],'order_status.id = order.status')
+                    ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+                    ->where([
+                        'order.profile_id' => ['=',$data['profile_id']]
+                    ])
+                    ->select();
+                return json(['succ' => 1 ,'data' => $order]);
+            }
+        }
+        else {
             return json(['succ' => 0, 'error' => $msg->msg]);
         }
     }
