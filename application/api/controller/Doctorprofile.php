@@ -128,20 +128,27 @@ class Doctorprofile extends Controller
         $result = [];
         $r_data = $request->param();
         $d_id = $r_data['department_id'];
+        $page = $r_data['page'];
         if($d_id == 0){
             $dp_list =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
                 ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
                 ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+                ->page($page)
                 ->limit(10)
                 ->select();
+            $count = Db::view('doctor_profile','id,name,department_id,introduction,photo,type')->count();
         }
         else{
             $dp_list =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
                 ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
                 ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
                 ->where('department_id','=',$d_id)
+                ->page($page)
                 ->limit(10)
                 ->select();
+            $count = Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+                    ->where('department_id','=',$d_id)
+                    ->count();
         }
         foreach ($dp_list as $dp){
             $time_list = Db::view('schedule','id,doctor_id,day,number')
@@ -154,7 +161,7 @@ class Doctorprofile extends Controller
             $dp['time_list'] = $time_list;
             $result[] = $dp;
         }
-        return json($result);
+        return json(['count' => $count, 'data' => $result]);
     }
 
     /*
