@@ -52,7 +52,7 @@ class Util{
                         return new ErrMsg(true,$profile);
                     }
                     else
-                        return new ErrMsg(false,'子账号不存在');
+                        return new ErrMsg(false,'医生不存在');
                 }
             }
         }

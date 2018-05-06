@@ -17,102 +17,65 @@ use think\Db;
 class Doctorprofile extends Controller
 {
     /*
-         * 查询
-         * 接口地址：api/Doctorprofile
-         * 参数：token,profile_id(0）
-         */
+     * 查询
+     * 医生信息公开，任何人都能查询，无需登录
+     * 接口地址：api/Doctorprofile
+     * 参数：profile_id
+     */
     public function index(Request $request){
-        $data = $request->param();
+        $did = $request->param()['profile_id'];
 
-        //单个
-        if($data['profile_id'] > 0){
-            //验证token
-            $msg = Util::token_validate($data['token'],$data['profile_id']);
-            if($msg->succ){
-                $profile = $msg->msg;
-                return json($profile);
-            }
-            else{
-                return json(['error' => '登录已失效']);
-            }
-        }
-        //列表
-        else{
-            //验证token
-            if(Util::token_validate($data['token'])){
-                $profile = DoctorProfileModel::get(['id' => $data['profile_id']]);
-                $list = $profile->doctor_profile()->selectOrFail();
-                return json($list);
-            }
-            else{
-                return json(['error' => '登录已失效']);
-            }
-        }
+        $data = DoctorProfileModel::get(['id' => $did]);
+        if ($data)
+            return json(['succ' => 1,'data' => $data]);
+        else
+            return json(['succ' => 0,'error' => '医生不存在']);
     }
     /*
     * 医生增加（doctor_profile表）
     * 接口地址：api/Doctorprofile
     * 参数：token,id，name,sex，age,history,
     */
+    //todo:增加医生资料应由管理员批量导入
     public function create(Request $request){
-        $data = $request->param();
-        $data['create_time'] = date("Y-m-d H:i:s");
-        //$result = UserModel::create($data);
 
-        $msg = Util::token_validate($data['token']);
-        if(true !== $msg->succ){
-            return json(['succ' => 0,'error' => $msg->msg]);
-        }
-        else{
-            $result = DoctorProfileModel::create($data);
-
-            return json(['succ' => 1, 'data' => $result]);//'token' => $token,删除
-        }
     }
     /*
-    *医生删除（doctor_profile表）
-    * 接口地址：api/Doctorprofile
-    * 参数：token,id，name,sex，
-    */
+     * todo:删除医生资料应由管理员操作
+     * 医生删除（doctor_profile表）
+     * 接口地址：api/Doctorprofile
+     * 参数：token, doctor_profile_id
+     */
     public function delete(Request $request)
     {
         $data = $request->param();
-        $msg = Util::token_validate($data['token'],$data['profile_id']);
-        //验证token
-        if ($msg->succ) {
-            $user = DoctorProfileModel::get(['id' => $data['profile_id']]);
 
-            if($user){
-                $user->delete();
-                return json(['succ' => 1]);
-            }
-            else
-                return json(['succ' => 0, 'error' => '用户不存在']);
-
-        } else {
-            return json(['error' =>  $msg->msg]);
-        }
     }
 
     /*
-  * 医生改（doctor_profile表）
-  * 接口地址：api/Doctorprofile
-  * 参数：token,id，
-  */
+     * 医生改（doctor_profile表）
+     * 医生本人只能修改个人介绍
+     * todo:管理员修改医生信息
+     * 接口地址：api/Doctorprofile
+     * 参数：token，introduction
+     */
     public function update(Request $request)
     {
-        $data = $request->param();//
+        $data = $request->param();
+        $user = Util::token_validate($data['token']);
         //验证token
-        if (Util::token_validate($data['token'], $data['profile_id'])) {
-            $user = DoctorProfileModel::get(['id' => $data['profile_id']]);
-            if ($user) {
-                $user->allowField(['name','department_id','introduction'])->save($_POST);
+        if ($user->succ) {
+            $doctor = $user->msg->doctor_profile()->find();
+            if ($doctor) {
+                $doctor->introduction = $data['introduction'];
+                $doctor->update_time = date("Y-m-d");
+                $doctor->save();
                 return json(['succ' => 1]);
             }else
-                return json(['succ' => 0, 'error' => '该医生不存在']);
+                return json(['succ' => 0, 'error' => '医生不存在']);
 
         } else {
-            return json(['error' => '登录已失效']);
+            return json(['succ' => 0, 'error' => '登录已失效']);
         }
 
     }
@@ -122,7 +85,6 @@ class Doctorprofile extends Controller
     * 接口地址：api/Doctorprofile/dutylist
     * 参数：department_id(为0则全部选择)
     */
-    //todo:分页加载
     public function dutylist(Request $request)
     {
         $result = [];
@@ -161,7 +123,7 @@ class Doctorprofile extends Controller
             $dp['time_list'] = $time_list;
             $result[] = $dp;
         }
-        return json(['count' => $count, 'data' => $result]);
+        return json(['count' => $count/10 + 1, 'data' => $result]);
     }
 
     /*
