@@ -56,7 +56,7 @@ class Doctorprofile extends Controller
      * 医生改（doctor_profile表）
      * 医生本人只能修改个人介绍
      * todo:管理员修改医生信息
-     * 接口地址：api/Doctorprofile
+     * 接口地址：api/Doctorprofile/update
      * 参数：token，introduction
      */
     public function update(Request $request)

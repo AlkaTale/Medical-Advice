@@ -79,6 +79,12 @@ class User extends Controller{
                 $user = $msg->msg;
                 $user->avatar = $results[0]->msg;
                 if (false !== $user->save()) {
+                    //如果是医生，将头像同步更新到医生资料的照片上
+                    if($user->type_id == 2){
+                        $doctor = $user->doctor_profile()->find();
+                        $doctor->photo = $results[0]->msg;
+                        $doctor->save();
+                    }
                     return json(['succ' => 1, 'result' => $results[0]->msg]);
                 } else {
                     return json(['succ' => 0, 'error' => '更新头像失败']);

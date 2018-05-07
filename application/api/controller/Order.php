@@ -84,7 +84,7 @@ class Order extends Controller{
         $msg = Util::token_validate($data['token'],$data['profile_id']);
         if($msg->succ){
             if($o_id > 0){
-                $order = Db::view('order','id,appointment_date,disease_input,price,record,advice,create_time')
+                $order = Db::view('order','id,appointment_date,disease_input,price,advice,create_time')
                     ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
                     ->view('doctor_profile',['name' => 'doctorname'],'doctor_profile.id = order.doctor_id')
                     ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
@@ -100,7 +100,7 @@ class Order extends Controller{
                 return json(['succ' => 1 ,'data' => $order]);
             }
             else{
-                $order = Db::view('order','id,appointment_date,disease_input,price,record,advice,create_time')
+                $order = Db::view('order','id,appointment_date,disease_input,price,advice,create_time')
                     ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
                     ->view('doctor_profile',['name' => 'doctorname'],'doctor_profile.id = order.doctor_id')
                     ->view('doctor_type',['type'=>'typename'],'doctor_profile.type = doctor_type.id')
