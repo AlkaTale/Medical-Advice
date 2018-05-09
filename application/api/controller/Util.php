@@ -12,6 +12,7 @@ use app\api\model\User as UserModel;
 use think\Controller;
 use think\Request;
 use think\Image;
+use think\Db;
 
 class Util{
 
@@ -84,5 +85,34 @@ class Util{
             }
         }
         return $results;
+    }
+    /**
+     * 记录尝试次数
+     * 参数：request
+     */
+    public static function log_attempt(Request $request, $type, $status, $user = null)
+    {
+        $ip_address = $request->ip();
+        if ($type == 'LOGIN')
+            Db::name('attempt_log')
+                ->insert(['ip' => $ip_address, 'type' => $type, 'time' => date("Y-m-d H:i:s"), 'status' => $status, 'user' => $user]);
+    }
+
+    /**
+     * 查询尝试次数
+     * 参数：request
+     */
+    public static function get_attempt_count(Request $request, $type, $status, $minute)
+    {
+        $ip_address = $request->ip();
+        $count = Db::name('attempt_log')
+            ->where([
+                'ip' => ['=',$ip_address],
+                'type' => ['=',$type],
+                'status' => ['=',$status]
+            ])
+            ->whereTime('time', '>', '-'.$minute.' minutes')
+            ->count();
+        return $count;
     }
 }

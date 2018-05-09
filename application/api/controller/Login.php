@@ -12,12 +12,26 @@ namespace app\api\controller;
 use think\Controller;
 use app\api\model\User;
 use think\Request;
+use think\Db;
 
 class Login extends Controller{
     
     public function index(Request $request){
+        $result = Db::name('const')
+            ->where('const_type', '=', 'max_login_attempt')
+            ->find();
+        $max_login_attempt = $result['const_value'];
+
+        $result = Db::name('const')
+            ->where('const_type', '=', 'login_minute')
+            ->find();
+        $login_minute = $result['const_value'];
         
-        //todo:加密保存用户密码，暂用2次MD5
+        $count = Util::get_attempt_count($request, 'LOGIN', 0, $login_minute);
+        if($count >= $max_login_attempt)
+            return json(['succ' => 0,'error' => '短时间内登录尝试次数已达上限']);
+        
+        //todo:加密保存用户密码，暂用2次MD5，加密应在客户端进行！
         $password = md5(md5(input('password')));
 
         //通过用户名/手机号登录
@@ -30,17 +44,20 @@ class Login extends Controller{
             'password' => $password
         ]);
 
+        $user_identifier = (input('username') == null)?input('phone'):input('username');
+
         //登录成功，读取信息存入session
         if($user_loginbyname || $user_loginbyphone){
-            //todo:子账号
             if($user_loginbyphone) $user = $user_loginbyphone;
             else $user = $user_loginbyname;
 
             //token保存登录状态
             $token = Token::create($user->id,$user->password);
             Token::update($user,$token);
+            Util::log_attempt($request,'LOGIN',1, $user_identifier);
             return json(['succ' => 1,'token' => $token, 'data' => $user]);
         }else{
+            Util::log_attempt($request,'LOGIN',0, $user_identifier);
             return json(['succ' => 0,'error' => '登录失败']);
         }
     }

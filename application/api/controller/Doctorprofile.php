@@ -127,7 +127,37 @@ class Doctorprofile extends Controller
     }
 
     /*
-    * 单个医生排班查询
+    * 单个医生一周排班查询
+    * 接口地址：api/Doctorprofile/weekduty
+    * 参数：doctor_id
+    */
+    public function weekduty(Request $request)
+    {
+        $r_data = $request->param();
+        $d_id = $r_data['doctor_id'];
+        $dp =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+                ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
+                ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+                ->where('doctor_profile.id','=',$d_id)
+                ->find();
+
+
+
+        $time_list = Db::view('schedule','id,doctor_id,day,number')
+                ->view('time_range',['range','flag'],'schedule.time_range_id = time_range.id')
+                ->where([
+                    'doctor_id' => ['=',$d_id],
+                    'schedule.status' => ['=',1]
+                ])
+                ->select();
+        $dp['time_list'] = $time_list;
+        $result = $dp;
+
+        return json(['data' => $result]);
+    }
+
+    /*
+    * 单个医生单日排班查询（用于提交订单时选择时间段）
     * 接口地址：api/Doctorprofile/doctorduty
     * 参数：doctor_id、day、flag(上/下午)
     */
