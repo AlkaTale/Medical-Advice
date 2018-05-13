@@ -58,7 +58,41 @@ class Login extends Controller{
             return json(['succ' => 1,'token' => $token, 'data' => $user]);
         }else{
             Util::log_attempt($request,'LOGIN',0, $user_identifier);
-            return json(['succ' => 0,'error' => '登录失败']);
+            $msg = '登录失败， 还剩'. ($max_login_attempt - $count - 1) .'次尝试机会';
+            return json(['succ' => 0,'error' => $msg]);
         }
+    }
+    
+    /*
+     * 查询登录记录
+     * 接口：api/Login/log
+     * 参数：token, status
+     */
+    public function log(Request $request){
+        $data = $request->param();
+        $user = Util::token_validate($data['token']);
+        //验证token
+        if ($user->succ) {
+            $results = Db::name('attempt_log')
+                ->where([
+                    'user' => [['=', $user->msg->nickname],['=', $user->msg->phone],'or'],
+                    'status' => ['=',$data['status']]
+                ])
+                ->order('id', 'desc')
+                ->limit(10)
+                ->select();
+
+            //隐藏IP后两位
+            $reg = '~(\d+)\.(\d+)\.(\d+)\.(\d+)~';
+            $results1 = [];
+            foreach ($results as $result){
+                $result['ip'] = preg_replace($reg,"$1.$2.*.*",$result['ip']);
+                $results1[] = $result;
+            }
+
+            return json(['succ' => 1, 'data' => $results1]);
+        }
+        else
+            return json(['succ' => 0, 'error' => '登录已失效']);
     }
 }

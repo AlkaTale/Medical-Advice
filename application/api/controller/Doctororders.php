@@ -100,7 +100,7 @@ class Doctororders extends Controller
                 $doctor_id = $doctor['id'];
 
                 $order = Db::view('order','id,appointment_date,disease_input,price,advice,create_time')
-                    ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
+                    ->view('user_profile',['name' => 'username', 'sex','birth'],'user_profile.id = order.profile_id')
                     ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
                     ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
                     ->view('order_status',['status'],'order_status.id = order.status')

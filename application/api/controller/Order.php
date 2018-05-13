@@ -84,7 +84,7 @@ class Order extends Controller{
         $msg = Util::token_validate($data['token'],$data['profile_id']);
         if($msg->succ){
             if($o_id > 0){
-                $order = Db::view('order','id,appointment_date,disease_input,price,advice,create_time')
+                $order = Db::view('order','id,profile_id,appointment_date,disease_input,price,advice,create_time')
                     ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
                     ->view('doctor_profile',['name' => 'doctorname'],'doctor_profile.id = order.doctor_id')
                     ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
@@ -97,10 +97,16 @@ class Order extends Controller{
                         'order.profile_id' => ['=',$data['profile_id']]
                     ])
                     ->find();
+
+                $cases = Db::view('medical_record','id,visit_time,hospital,description,profile_id')
+                    ->view('order_mrecord',['order_id'],'order_mrecord.record_id = medical_record.id')
+                    ->where('order_mrecord.order_id','=',$order['id'])
+                    ->select();
+                $order['cases'] = $cases;
                 return json(['succ' => 1 ,'data' => $order]);
             }
             else{
-                $order = Db::view('order','id,appointment_date,disease_input,price,advice,create_time')
+                $order = Db::view('order','id,profile_id,appointment_date,disease_input,price,advice,create_time')
                     ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
                     ->view('doctor_profile',['name' => 'doctorname'],'doctor_profile.id = order.doctor_id')
                     ->view('doctor_type',['type'=>'typename'],'doctor_profile.type = doctor_type.id')
@@ -112,6 +118,7 @@ class Order extends Controller{
                         'order.profile_id' => ['=',$data['profile_id']]
                     ])
                     ->select();
+
                 return json(['succ' => 1 ,'data' => $order]);
             }
         }

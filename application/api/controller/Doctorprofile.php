@@ -32,6 +32,31 @@ class Doctorprofile extends Controller
             return json(['succ' => 0,'error' => '医生不存在']);
     }
     /*
+     * 通过token查询
+     * 接口地址：api/Doctorprofile/tokenquery
+     * 参数：token
+     */
+    public function tokenquery(Request $request){
+        $data = $request->param();
+        $user = Util::token_validate($data['token']);
+        //验证token
+        if ($user->succ) {
+            $doctor = $user->msg->doctor_profile()->find();
+            if ($doctor) {
+                $result =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+                    ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
+                    ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+                    ->where('doctor_profile.id','=',$doctor['id'])
+                    ->find();
+                return json(['succ' => 1, 'data' => $result]);
+            }else
+                return json(['succ' => 0, 'error' => '医生不存在']);
+
+        } else {
+            return json(['succ' => 0, 'error' => '登录已失效']);
+        }
+    }
+    /*
     * 医生增加（doctor_profile表）
     * 接口地址：api/Doctorprofile
     * 参数：token,id，name,sex，age,history,
@@ -69,13 +94,15 @@ class Doctorprofile extends Controller
             if ($doctor) {
                 $doctor->introduction = $data['introduction'];
                 $doctor->update_time = date("Y-m-d");
-                $doctor->save();
-                return json(['succ' => 1]);
+                if (false != $doctor->save())
+                    return json(['succ' => 1, 'msg' => '修改成功']);
+                else
+                    return json(['succ' => 0, 'msg' => '修改失败']);
             }else
-                return json(['succ' => 0, 'error' => '医生不存在']);
+                return json(['succ' => 0, 'msg' => '医生不存在']);
 
         } else {
-            return json(['succ' => 0, 'error' => '登录已失效']);
+            return json(['succ' => 0, 'msg' => '登录已失效']);
         }
 
     }

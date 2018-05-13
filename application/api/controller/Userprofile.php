@@ -95,7 +95,7 @@
 
         /*
       * 子用户改（profile表）
-      * 接口地址：api/Userprofile
+      * 接口地址：api/Userprofile/update
       * 参数：token,id，name,sex，
       */
         public function update(Request $request)
@@ -105,8 +105,10 @@
                 if (Util::token_validate($data['token'], $data['profile_id'])) {
                     $user = UserProfileModel::get(['id' => $data['profile_id']]);
                     if ($user) {
-                        $user->allowField(['name','birth','sex','address','phone','create_time'])->save($_POST);
-                        return json(['succ' => 1]);
+                        if(false != $user->allowField(['name','birth','sex','address','phone'])->save($_POST))
+                            return json(['succ' => 1]);
+                        else
+                            return json(['succ' => 0]);
                     }else
                         return json(['succ' => 0, 'error' => '子用户不存在']);
 
