@@ -9,6 +9,7 @@ use app\api\model\User as UserModel;
 use think\Controller;
 use think\Request;
 use think\Image;
+use think\Db;
 
 
 class User extends Controller{
@@ -32,14 +33,46 @@ class User extends Controller{
     /*
      * 注册账户
      * 接口地址：api/User/create
-     * 参数：nickname,password,phone,type_id
+     * 参数：nickname,password,phone,code.type_id = 1（仅限注册患者账号）
      */
     public function create(Request $request){
         $data = $request->param();
+        $data['type_id'] = 1;
         $data['create_time'] = date("Y-m-d H:i:s");
         //$result = UserModel::create($data);
 
-        //加载验证器
+        //检查code
+        //获取设置的code有效期
+        $const = Db::name('const')
+            ->where('const_type', '=', 'smscode_minute')
+            ->find();
+        $smscode_minute = $const['const_value'];
+        //获取最近一条code
+        $code_result = Db::name('sms_code')
+            ->where([
+                'phone' => ['=', $data['phone']],
+            ])
+            ->order('time', 'desc')
+            ->limit(1)
+            ->find();
+
+        //查询发送记录
+        if ($code_result == null)
+            return json(['succ' => 0,'error' => '短信验证码未发送']);
+        else{
+            //查询是否过期
+            $temp = date("Y-m-d G:H:s",strtotime("-".$smscode_minute." minutes"));
+            if($code_result['time'] <= $temp){
+                return json(['succ' => 0,'error' => '短信验证码已过期']);
+            }
+            else{
+                //查询是否一致
+                if($data['code'] != $code_result['code'])
+                    return json(['succ' => 0,'error' => '短信验证码不正确']);
+            }
+        }
+
+
         $valid_result = $this->validate($data,'User');
         if(true !== $valid_result){
             return json(['succ' => 0,'error' => $valid_result]);
@@ -52,6 +85,15 @@ class User extends Controller{
             Token::update($result,$token);
             return json(['succ' => 1,'token' => $token, 'data' => $result]);
         }
+    }
+
+    /*
+    * 验证注册输入
+    */
+    public function validate_reg($data){
+        //加载验证器
+        $valid_result = $this->validate($data,'User');
+        return $valid_result;
     }
 
     /*
