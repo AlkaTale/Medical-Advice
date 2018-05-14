@@ -45,7 +45,7 @@ class Util{
                         return new ErrMsg(true,$profile);
                     }
                     else
-                        return new ErrMsg(false,'子账号不存在');
+                        return new ErrMsg(false,'患者资料不存在');
                 }
 //                else if($user->type_id == 2){
 //                    $profile = $user->doctor_profile()->find();

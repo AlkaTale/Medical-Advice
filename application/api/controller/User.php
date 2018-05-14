@@ -5,6 +5,7 @@
  */
 namespace app\api\controller;
 
+use app\api\model\ErrMsg;
 use app\api\model\User as UserModel;
 use think\Controller;
 use think\Request;
@@ -42,36 +43,9 @@ class User extends Controller{
         //$result = UserModel::create($data);
 
         //检查code
-        //获取设置的code有效期
-        $const = Db::name('const')
-            ->where('const_type', '=', 'smscode_minute')
-            ->find();
-        $smscode_minute = $const['const_value'];
-        //获取最近一条code
-        $code_result = Db::name('sms_code')
-            ->where([
-                'phone' => ['=', $data['phone']],
-            ])
-            ->order('time', 'desc')
-            ->limit(1)
-            ->find();
-
-        //查询发送记录
-        if ($code_result == null)
-            return json(['succ' => 0,'error' => '短信验证码未发送']);
-        else{
-            //查询是否过期
-            $temp = date("Y-m-d G:H:s",strtotime("-".$smscode_minute." minutes"));
-            if($code_result['time'] <= $temp){
-                return json(['succ' => 0,'error' => '短信验证码已过期']);
-            }
-            else{
-                //查询是否一致
-                if($data['code'] != $code_result['code'])
-                    return json(['succ' => 0,'error' => '短信验证码不正确']);
-            }
-        }
-
+        $code_msg = $this->validate_code($data['phone'],'REG',$data['code']);
+        if (true != $code_msg->succ)
+            return json(['succ' => 0,'error' => $code_msg->msg]);
 
         $valid_result = $this->validate($data,'User');
         if(true !== $valid_result){
@@ -87,6 +61,75 @@ class User extends Controller{
         }
     }
 
+    /*
+     * 更改手机
+     * 接口地址：api/User/updatephone
+     * 参数：token,old_phone,phone,code
+     */
+    public function updatephone(Request $request){
+        $data = $request->param();
+
+        $msg = Util::token_validate($data['token']);
+        if($msg->succ){
+            $user = Db::name('user')
+                ->where([
+                    'token' => ['=', $data['token']],
+                ])
+                ->find();
+            if($user['phone'] != $data['old_phone'])
+                return json(['succ' => 0,'error' => '原绑定手机号不正确']);
+
+            //验证code是否正确
+            $code_msg = $this->validate_code($data['phone'],'CHANGEPHONE',$data['code']);
+            if (true != $code_msg->succ)
+                return json(['succ' => 0,'error' => $code_msg->msg]);
+
+            //修改手机
+            Db::name('user')
+                ->where('id', $user['id'])
+                ->update(['phone' => $data['phone']]);
+            return json(['succ' => 1,'msg' => '修改成功']);
+        }
+        else
+            return json(['succ' => 0, 'error' => $msg->msg]);
+    }
+
+    /*
+    * 验证code
+    */
+    public function validate_code($phone,$type,$code){
+        //获取设置的code有效期
+        $const = Db::name('const')
+            ->where('const_type', '=', 'smscode_minute')
+            ->find();
+        $smscode_minute = $const['const_value'];
+        //获取最近一条code
+        $code_result = Db::name('sms_code')
+            ->where([
+                'phone' => ['=', $phone],
+                'action' => ['=', $type],
+            ])
+            ->order('time', 'desc')
+            ->limit(1)
+            ->find();
+
+        //查询发送记录
+        if ($code_result == null)
+            return new ErrMsg(false,'短信验证码未发送');
+        else{
+            //查询是否过期
+            $temp = date("Y-m-d G:H:s",strtotime("-".$smscode_minute." minutes"));
+            if($code_result['time'] <= $temp){
+                return new ErrMsg(false,'短信验证码已过期');
+            }
+            else{
+                //查询是否一致
+                if($code != $code_result['code'])
+                    return new ErrMsg(false,'短信验证码不正确');
+            }
+        }
+        return new ErrMsg(true,'');
+    }
     /*
     * 验证注册输入
     */
