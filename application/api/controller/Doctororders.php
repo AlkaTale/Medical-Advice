@@ -21,6 +21,7 @@ class Doctororders extends Controller
      * 1、查询历史订单（列表, flag = 1）
      * 2、查询已付款未咨询的订单（按日期: flag = 0）
      * 3、查询待给出咨询意见的订单（列表，flag = 2）
+     * 4、查询当前时间段的订单（列表，flag = 3）
      * 接口：api/Doctororders
      * 参数：token, flag, date(可选)
      */
@@ -41,7 +42,7 @@ class Doctororders extends Controller
                         ->view('order_status',['status'],'order_status.id = order.status')
                         ->where([
                             'order.doctor_id' => ['=',$doctor_id],
-                            'order_status.status' => ['=','已完成']
+                            'order_status.status' => [['=','已完成'],['=','待评价'],'or']
                         ])
                         ->select();
                     return json(['succ' => 1, 'data' => $orders]);
@@ -55,7 +56,7 @@ class Doctororders extends Controller
                         ->view('order_status',['status'],'order_status.id = order.status')
                         ->where([
                             'order.doctor_id' => ['=',$doctor_id],
-                            'order_status.status' => ['=','咨询中']
+                            'order_status.status' => ['=','待建议']
                         ])
                         ->select();
                     return json(['succ' => 1, 'data' => $orders]);
@@ -68,8 +69,26 @@ class Doctororders extends Controller
                         ->view('order_status',['status'],'order_status.id = order.status')
                         ->where([
                             'order.doctor_id' => ['=',$doctor_id],
-                            'order_status.status' => ['=','已支付'],
+                            'order_status.status' => ['=','待咨询'],
                             'order.appointment_date' => ['=',$data['date']]
+                        ])
+                        ->select();
+                    return json(['succ' => 1, 'data' => $orders]);
+                }
+
+                //flag = 3, 查询当前时间段的订单
+                elseif ($data['flag'] == 3){
+                    $orders =  Db::view('order','id,profile_id,appointment_date,price')
+                        ->view('user_profile',['name','sex','birth'],'order.profile_id = user_profile.id')
+                        ->view('order_status',['status'],'order_status.id = order.status')
+                        ->view('schedule',[],'schedule.id = order.appointment_time')
+                        ->view('time_range',[],'time_range.id = schedule.time_range_id')
+                        ->where([
+                            'order.doctor_id' => ['=',$doctor_id],
+//                            'order_status.status' => ['=','待咨询'],
+                            'order.appointment_date' => ['=',date('y-m-d')],
+                            'time_range.begin' => ['<', date("H:i:s",time())],
+                            'time_range.end' => ['>', date("H:i:s",time())]
                         ])
                         ->select();
                     return json(['succ' => 1, 'data' => $orders]);
@@ -166,5 +185,52 @@ class Doctororders extends Controller
             return json(['succ' => 0, 'error' => '登录已失效']);
     }
 
+    /*
+     * 叫号
+     * 1、查找本时间段咨询中的患者，更改其订单状态-“待建议”
+     * 2、查找本时间段预约最早的待咨询患者，更改其订单状态-“咨询中”
+     * 3、发送短信提醒
+     * 接口：api/Doctororders/queue
+     * 参数：token
+     */
+    public function queue(Request $request){
+        $data = $request->param();
+        $user = Util::token_validate($data['token']);
+        //验证token
+        if ($user->succ) {
+            $doctor = $user->msg->doctor_profile()->find();
+            if ($doctor) {
+                $doctor_id = $doctor['id'];
 
+                $result1 = Db::name('order')
+                    ->where([
+                        'doctor_id' => ['=', $doctor_id],
+                        'status' => ['=','2']               //todo:咨询中
+                    ])
+                    ->update(['status' => '3']); //todo:待建议
+
+                $result2 = Db::name('order')
+                    ->where([
+                        'doctor_id' => ['=', $doctor_id],
+                        'status' => ['=','1']               //todo:待咨询
+                    ])
+                    ->order('create_time','asc')
+                    ->limit(1)
+                    ->update(['status' => '2']); //todo:咨询中
+
+//                dump($result1);
+//                dump($result2);
+
+                if (false == $result2)
+                    return json(['succ' => 0, 'error' => '所有患者已叫号完毕']);
+
+                else
+                    return json(['succ' => 1, 'error' => '叫号成功']);
+
+            }else
+                return json(['succ' => 0, 'error' => '医生不存在']);
+        }
+        else
+            return json(['succ' => 0, 'error' => '登录已失效']);
+    }
 }
