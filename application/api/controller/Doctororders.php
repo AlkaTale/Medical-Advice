@@ -143,6 +143,41 @@ class Doctororders extends Controller
     }
 
     /*
+     * 给出咨询建议
+     * 接口：api/Doctororders/advice
+     * 参数：token, oid, advice
+     */
+    public function advice(Request $request){
+        $data = $request->param();
+        $user = Util::token_validate($data['token']);
+        //验证token
+        if ($user->succ) {
+            $doctor = $user->msg->doctor_profile()->find();
+            if ($doctor) {
+                $doctor_id = $doctor['id'];
+
+                $result = Db::name('order')
+                    ->where([
+                        'id' => ['=', $data['oid']],
+                        'status' => ['=', '3']  //todo:待建议
+                    ])
+                    ->update([
+                        'status' => '4',  //todo:待评价
+                        'advice' => $data['advice']
+                    ]);
+
+                if(false != $result)
+                    return json(['succ' => 1, 'msg' => '修改成功']);
+                else
+                    return json(['succ' => 0, 'msg' => '修改失败']);
+            }else
+                return json(['succ' => 0, 'error' => '医生不存在']);
+        }
+        else
+            return json(['succ' => 0, 'error' => '登录已失效']);
+    }
+
+    /*
      * 查询订单病历详情
      * 接口：api/Doctororders/casedetail
      * 参数：token, oid, cid
@@ -209,23 +244,35 @@ class Doctororders extends Controller
                     ])
                     ->update(['status' => '3']); //todo:待建议
 
-                $result2 = Db::name('order')
+                $order =  Db::view('order','id,profile_id,appointment_date,price')
+                    ->view('schedule',[],'schedule.id = order.appointment_time')
+                    ->view('time_range',[],'time_range.id = schedule.time_range_id')
                     ->where([
-                        'doctor_id' => ['=', $doctor_id],
-                        'status' => ['=','1']               //todo:待咨询
+                        'order.doctor_id' => ['=',$doctor_id],
+                        'order.status' => ['=','1'],//todo:待咨询
+                        'order.appointment_date' => ['=',date('y-m-d')],
+                        'time_range.begin' => ['<', date("H:i:s",time())],
+                        'time_range.end' => ['>', date("H:i:s",time())]
                     ])
                     ->order('create_time','asc')
                     ->limit(1)
+                    ->find();
+
+                $result2 = Db::name('order')
+                    ->where([
+                        'id' => ['=', $order['id']],
+                        'status' => ['=','1']               //todo:待咨询
+                    ])
                     ->update(['status' => '2']); //todo:咨询中
 
-//                dump($result1);
-//                dump($result2);
-
-                if (false == $result2)
+                if (false == $order)
                     return json(['succ' => 0, 'error' => '所有患者已叫号完毕']);
 
-                else
-                    return json(['succ' => 1, 'error' => '叫号成功']);
+                else{
+                    //todo:发送短信提醒
+                    return json(['succ' => 1, 'data' => $order]);
+                }
+
 
             }else
                 return json(['succ' => 0, 'error' => '医生不存在']);

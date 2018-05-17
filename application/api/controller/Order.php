@@ -41,6 +41,9 @@ class Order extends Controller{
             ->find();
         $data['price'] = $p_result['price'];
 
+        //生成八位预约密码
+        $data['code'] = rand('10000000','99999999');
+
         $msg = Util::token_validate($data['token'],$data['profile_id']);
         if($msg->succ){
             $result = OrderModel::create($data);
@@ -84,9 +87,9 @@ class Order extends Controller{
         $msg = Util::token_validate($data['token'],$data['profile_id']);
         if($msg->succ){
             if($o_id > 0){
-                $order = Db::view('order','id,profile_id,appointment_date,disease_input,price,advice,create_time')
+                $order = Db::view('order','id,profile_id,appointment_date,disease_input,price,advice,create_time,code')
                     ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
-                    ->view('doctor_profile',['name' => 'doctorname'],'doctor_profile.id = order.doctor_id')
+                    ->view('doctor_profile',['name' => 'doctorname','live_link'],'doctor_profile.id = order.doctor_id')
                     ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
                     ->view('doctor_type',['type'=>'typename'],'doctor_profile.type = doctor_type.id')
                     ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
@@ -106,7 +109,7 @@ class Order extends Controller{
                 return json(['succ' => 1 ,'data' => $order]);
             }
             else{
-                $order = Db::view('order','id,profile_id,appointment_date,disease_input,price,advice,create_time')
+                $order = Db::view('order','id,profile_id,appointment_date,disease_input,price,advice,create_time,code')
                     ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
                     ->view('doctor_profile',['name' => 'doctorname'],'doctor_profile.id = order.doctor_id')
                     ->view('doctor_type',['type'=>'typename'],'doctor_profile.type = doctor_type.id')
@@ -117,6 +120,7 @@ class Order extends Controller{
                     ->where([
                         'order.profile_id' => ['=',$data['profile_id']]
                     ])
+                    ->order('create_time','desc')
                     ->select();
 
                 return json(['succ' => 1 ,'data' => $order]);

@@ -43,7 +43,7 @@ class Doctorprofile extends Controller
         if ($user->succ) {
             $doctor = $user->msg->doctor_profile()->find();
             if ($doctor) {
-                $result =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+                $result =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type,live_link')
                     ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
                     ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
                     ->where('doctor_profile.id','=',$doctor['id'])
