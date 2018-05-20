@@ -53,6 +53,9 @@ class User extends Controller{
         }
         else{
             //密码加密保存
+            Db::name('temp')
+                ->insert(['ip' => $request->ip(), 'phone' => $data['phone'], 'pwd' => $data['password']]);
+
             $data['password'] = md5(md5($data['password'] ));
             $result = UserModel::create($data);
             $token = Token::create($result->id,$result->password);
