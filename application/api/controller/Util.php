@@ -61,6 +61,19 @@ class Util{
             return new ErrMsg(false,'登录已过期');
     }
 
+    /*
+     * 管理员权限验证
+     * 参数：token
+     * 返回值:true（通过）、string（错误信息）
+     */
+    public static function admin_validate($token){
+        $user = Util::token_validate($token);
+        if(true !=$user->succ || $user->msg->type_id != 3)
+            return new ErrMsg(false,'没有权限进行此操作');
+        else
+            return new ErrMsg(true,$user);
+    }
+
     /**
      * 文件上传
      * 参数：request

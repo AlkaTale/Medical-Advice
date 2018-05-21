@@ -19,7 +19,7 @@ class Order extends Controller{
     /*
      * 新增订单
      * 接口地址：api/order/create
-     * 参数：token,profile_id...
+     * 参数：token,profile_id,appointment_time
      */
     public function create(Request $request){
         $data = $request->param();
@@ -73,7 +73,7 @@ class Order extends Controller{
     /*
      * 查询订单
      * 接口地址：api/order/
-     * 参数：token,profile_id...
+     * 参数：token,profile_id,order_id
      */
     public function index(Request $request){
         $data = $request->param();
@@ -130,7 +130,17 @@ class Order extends Controller{
             return json(['succ' => 0, 'error' => $msg->msg]);
         }
     }
+    /*
+     * 取消订单
+     * 接口地址：api/order/cancel
+     * 参数：token,profile_id,order_id
+     */
 
+    /*
+    * 删除订单
+    * 接口地址：api/order/delete
+    * 参数：token,profile_id,order_id
+    */
     public function getDate($day){
         $length = $day - date("w");
         if ($length <= 0)

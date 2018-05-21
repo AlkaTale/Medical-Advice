@@ -23,4 +23,51 @@ class Department extends Controller{
         $result = Db::name('department')->field('id,name')->select();
         return json($result);
     }
+
+    public function detaillist(){
+        $result = Db::name('department')->select();
+        return json($result);
+    }
+
+    /*
+     * 手动添加科室
+     * 调用：api/department/create
+     * 参数：token,name,description
+     */
+    public function create(Request $request){
+        $data = $request->param();
+        $admin = Util::admin_validate($data['token']);
+        if(true !=$admin->succ)
+            return json(['succ' => 0,'error' => $admin->msg]);
+
+        $result = Db::name('department')
+            ->insert(['name' => $data['name'], 'description' => $data['description']]);
+        if ($result)
+            return json(['succ' => 1]);
+        else
+            return json(['succ' => 0,'error' => '添加失败']);
+    }
+
+    /*
+     * 修改科室
+     * 调用：api/department/update
+     * 参数：token,name,description,department_id
+     */
+    public function update(Request $request)
+    {
+        $data = $request->param();
+        $admin = Util::admin_validate($data['token']);
+        if (true != $admin->succ)
+            return json(['succ' => 0, 'error' => $admin->msg]);
+
+        $result = Db::name('department')
+            ->where([
+                'id' => ['=', $data['department_id']],
+            ])
+            ->update(['name' => $data['name'],'description' => $data['description']]);
+        if ($result)
+            return json(['succ' => 1]);
+        else
+            return json(['succ' => 0,'error' => '修改失败']);
+    }
 }

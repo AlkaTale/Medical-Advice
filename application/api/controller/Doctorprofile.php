@@ -32,6 +32,21 @@ class Doctorprofile extends Controller
             return json(['succ' => 0,'error' => '医生不存在']);
     }
     /*
+     * 通过姓名查询
+     * 医生信息公开，任何人都能查询，无需登录
+     * 接口地址：api/Doctorprofile/name
+     * 参数：name
+     */
+    public function name(Request $request){
+        $name = $request->param()['name'];
+
+        $data = DoctorProfileModel::all(['name' => $name]);
+        if ($data)
+            return json(['succ' => 1,'data' => $data]);
+        else
+            return json(['succ' => 0,'error' => '医生不存在']);
+    }
+    /*
      * 通过token查询
      * 接口地址：api/Doctorprofile/tokenquery
      * 参数：token
@@ -57,13 +72,37 @@ class Doctorprofile extends Controller
         }
     }
     /*
-    * 医生增加（doctor_profile表）
-    * 接口地址：api/Doctorprofile
-    * 参数：token,id，name,sex，age,history,
+    * 手动创建医生账号和资料（user和doctor_profile表）
+    * 需要管理员权限
+    * 接口地址：api/Doctorprofile/create
+    * 参数：token,(nickname,password,phone, name,deid,type,introduction)
     */
-    //todo:增加医生资料应由管理员批量导入
     public function create(Request $request){
+        $data = $request->param();
+        $admin = Util::admin_validate($data['token']);
+        if(true !=$admin->succ)
+            return json(['succ' => 0,'error' => $admin->msg]);
 
+        $data_profile = new DoctorProfileModel();
+
+        //组装医生账号数据
+        $data['type_id'] = 2;
+        $data['create_time'] = date("Y-m-d H:i:s");
+
+        $user = User::create($data);
+
+        if($user){
+            //组装医生资料数据
+            $data_profile->name = $data['name'];
+            $data_profile->department_id = $data['deid'];
+            $data_profile->type = $data['type'];
+            $data_profile->introduction = $data['introduction'];
+            $data_profile->update_time = date("Y-m-d");
+            $user->doctor_profile()->save($data_profile);
+            return json(['succ' => 1]);
+        }
+        else
+            return json(['succ' => 0,'error' => '新建账号失败']);
     }
     /*
      * todo:删除医生资料应由管理员操作
@@ -73,14 +112,16 @@ class Doctorprofile extends Controller
      */
     public function delete(Request $request)
     {
-        $data = $request->param();
+        //$data = $request->param();
+
+
 
     }
 
     /*
      * 医生改（doctor_profile表）
      * 医生本人只能修改个人介绍
-     * todo:管理员修改医生信息
+     * 管理员修改医生信息
      * 接口地址：api/Doctorprofile/update
      * 参数：token，introduction
      */
@@ -90,17 +131,35 @@ class Doctorprofile extends Controller
         $user = Util::token_validate($data['token']);
         //验证token
         if ($user->succ) {
-            $doctor = $user->msg->doctor_profile()->find();
-            if ($doctor) {
-                $doctor->introduction = $data['introduction'];
-                $doctor->update_time = date("Y-m-d");
-                if (false != $doctor->save())
-                    return json(['succ' => 1, 'msg' => '修改成功']);
-                else
-                    return json(['succ' => 0, 'msg' => '修改失败']);
-            }else
-                return json(['succ' => 0, 'msg' => '医生不存在']);
-
+            //管理员操作
+            //附加参数：doctor_id.name,department_id.type,introduction
+            if($user->msg->type_id == 3){
+                $doctor = DoctorProfileModel::get(['id' => $data['doctor_id']]);
+                if ($doctor) {
+                    $doctor->name = $data['name'];
+                    $doctor->department_id = $data['department_id'];
+                    $doctor->type = $data['type'];
+                    $doctor->introduction = $data['introduction'];
+                    $doctor->update_time = date("Y-m-d");
+                    if (false != $doctor->save())
+                        return json(['succ' => 1, 'msg' => '修改成功']);
+                    else
+                        return json(['succ' => 0, 'msg' => '修改失败']);
+                }else
+                    return json(['succ' => 0, 'msg' => '医生不存在']);
+            }
+            else{
+                $doctor = $user->msg->doctor_profile()->find();
+                if ($doctor) {
+                    $doctor->introduction = $data['introduction'];
+                    $doctor->update_time = date("Y-m-d");
+                    if (false != $doctor->save())
+                        return json(['succ' => 1, 'msg' => '修改成功']);
+                    else
+                        return json(['succ' => 0, 'msg' => '修改失败']);
+                }else
+                    return json(['succ' => 0, 'msg' => '医生不存在']);
+            }
         } else {
             return json(['succ' => 0, 'msg' => '登录已失效']);
         }
