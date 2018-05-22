@@ -88,6 +88,17 @@ class Importxls extends Controller{
                 $success = Db::name('department')->insertAll($data_department);
                 return json(['succ' => 1,'count' => $success, 'failed' => $i-$success]);
             }
+            elseif ($data['type'] == 'doctor_type'){
+                $data = [];
+                foreach($excel_array as $k=>$v) {
+                    //组装科室数据
+                    $data[$k]['type'] = $v[0];
+                    $data[$k]['price'] = $v[1];
+                    $i++;
+                }
+                $success = Db::name('doctor_type')->insertAll($data);
+                return json(['succ' => 1,'count' => $success, 'failed' => $i-$success]);
+            }
             else
                 return json(['succ' => 0,'error' => '导入类型错误']);
 

@@ -21,12 +21,12 @@ class Department extends Controller{
      */
     public function index(){
         $result = Db::name('department')->field('id,name')->select();
-        return json($result);
+        return json(['succ' => 1, 'data' => $result]);
     }
 
     public function detaillist(){
         $result = Db::name('department')->select();
-        return json($result);
+        return json(['succ' => 1, 'data' => $result]);
     }
 
     /*

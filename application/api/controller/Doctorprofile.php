@@ -10,6 +10,7 @@ namespace app\api\controller;
 
 use app\api\model\DoctorProfile as DoctorProfileModel;
 use app\api\model\User;
+use app\api\controller\User as UserController;
 use think\Controller;
 use think\Request;
 use think\Db;
@@ -40,7 +41,11 @@ class Doctorprofile extends Controller
     public function name(Request $request){
         $name = $request->param()['name'];
 
-        $data = DoctorProfileModel::all(['name' => $name]);
+        $data =  Db::view('doctor_profile','id,name,department_id,introduction,type')
+            ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
+            ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+            ->where('doctor_profile.name','=',$name)
+            ->select();
         if ($data)
             return json(['succ' => 1,'data' => $data]);
         else
@@ -86,9 +91,16 @@ class Doctorprofile extends Controller
         $data_profile = new DoctorProfileModel();
 
         //组装医生账号数据
+        $data['token'] = '';
         $data['type_id'] = 2;
         $data['create_time'] = date("Y-m-d H:i:s");
 
+        //检查账号是否符合要求
+        $user = new UserController();
+        $valid_result = $user->validate_reg($data);
+        if(true !== $valid_result){
+            return json(['succ' => 0,'error' => $valid_result]);
+        }
         $user = User::create($data);
 
         if($user){
