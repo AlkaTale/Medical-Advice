@@ -20,12 +20,18 @@ class Importxls extends Controller{
     /*
      * 导入医生账号和资料
      * 接口地址：api/Importxls
-     * 参数：token,excel,type（导入数据类型：doctor、department、doctor_type）
+     * 参数：token,file_data,type（导入数据类型：doctor、department、doctor_type）
      */
     public function index(Request $request){
+
+        $data = $request->param();
+        //获取表单上传文件
+        $files = request()->file();
+        if ($files == null)
+            return json(['succ' => 0,'error' => '未选择文件']);
+
         //管理员权限验证
         //todo：是否需要记录管理员操作日志？
-        $data = $request->param();
         $admin = Util::admin_validate($data['token']);
         if(true !=$admin->succ)
             return json(['succ' => 0,'error' => $admin->msg]);
@@ -33,8 +39,10 @@ class Importxls extends Controller{
         vendor("PHPExcel.PHPExcel"); //方法一
         $objPHPExcel = new \PHPExcel();
 
-        //获取表单上传文件
-        $file = request()->file('excel');
+
+//        dump($files);
+//        dump($data);
+        $file = $files['file_data'];
         $info = $file->validate(['size'=>15678,'ext'=>'xlsx,xls,csv'])->move(ROOT_PATH . 'public' . DS . 'excel');
         if($info){
             $exclePath = $info->getSaveName();  //获取文件名

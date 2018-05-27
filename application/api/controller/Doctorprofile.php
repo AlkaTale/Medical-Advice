@@ -44,7 +44,7 @@ class Doctorprofile extends Controller
         $data =  Db::view('doctor_profile','id,name,department_id,introduction,type')
             ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
             ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
-            ->where('doctor_profile.name','=',$name)
+            ->where('doctor_profile.name','like','%'.$name.'%')
             ->select();
         if ($data)
             return json(['succ' => 1,'data' => $data]);
@@ -254,6 +254,7 @@ class Doctorprofile extends Controller
         return json(['data' => $result]);
     }
 
+
     /*
     * 单个医生单日排班查询（用于提交订单时选择时间段）
     * 接口地址：api/Doctorprofile/doctorduty
@@ -284,5 +285,89 @@ class Doctorprofile extends Controller
         $dp['time_list'] = $time_list;
 
         return json($dp);
+    }
+
+
+    /*
+    * 单个医生半天排班查询（管理员用）
+    * 接口地址：api/Doctorprofile/dayduty
+    * 参数：doctor_id、day、flag(上/下午)
+    */
+    public function dayduty(Request $request)
+    {
+        $r_data = $request->param();
+        $d_id = $r_data['doctor_id'];
+        $flag = $r_data['flag'];
+        $day = $r_data['day'];
+
+        $time_list = Db::view('schedule','id,doctor_id,day,time_range_id,number,status,max_count')
+            //注：添加两个多余的text属性，方便前端存储经过文字处理后的星期几和排班状态
+            ->view('time_range',['range','flag','flag'=>'text_day','range'=>'text_status'],'schedule.time_range_id = time_range.id')
+            ->where([
+                'doctor_id' => ['=',$d_id],
+                'day' => ['=',$day],
+                'flag' => ['=',$flag],
+            ])
+            ->select();
+
+        return json(['succ' => 1, 'data' => $time_list]);
+    }
+
+
+    /*
+    * 添加排班（管理员用）
+     * todo:排班时间段冲突检查
+    * 接口地址：api/Doctorprofile/addduty
+    * 参数：token、doctor_id、day、range、max_count
+    */
+    public function addduty(Request $request)
+    {
+        $r_data = $request->param();
+
+        $admin = Util::admin_validate($r_data['token']);
+        if(true !=$admin->succ)
+            return json(['succ' => 0,'error' => $admin->msg]);
+
+        $d_id = $r_data['doctor_id'];
+        $range = $r_data['range'];
+        $day = $r_data['day'];
+        $max = $r_data['max_count'];
+
+        $result = Db::name('schedule')
+            ->insert(['doctor_id' => $d_id, 'day' => $day, 'time_range_id' => $range, 'max_count' => $max]);
+
+        if ($result)
+            return json(['succ' => 1]);
+        else
+            return json(['succ' => 0,'error' => '添加失败']);
+    }
+
+    /*
+    * 编辑排班（管理员用）
+     * 仅能修改最大数量和是否有效
+    * 接口地址：api/Doctorprofile/editduty
+    * 参数：token、sid、max_count、status
+    */
+    public function editduty(Request $request)
+    {
+        $r_data = $request->param();
+
+        $admin = Util::admin_validate($r_data['token']);
+        if(true !=$admin->succ)
+            return json(['succ' => 0,'error' => $admin->msg]);
+
+        $sid = $r_data['sid'];
+        $status = $r_data['status'];
+        $max = $r_data['max_count'];
+
+        $result = Db::name('schedule')
+            ->where([
+                'id' => ['=', $sid],
+            ])
+            ->update(['status' => $status,'max_count' => $max]);
+        if ($result)
+            return json(['succ' => 1]);
+        else
+            return json(['succ' => 0,'error' => '修改失败']);
     }
 }

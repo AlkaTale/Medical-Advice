@@ -55,7 +55,12 @@ class Login extends Controller{
             $token = Token::create($user->id,$user->password);
             Token::update($user,$token);
             Util::log_attempt($request,'LOGIN',1, $user_identifier);
-            return json(['succ' => 1,'token' => $token, 'data' => $user]);
+            if($user->type_id == 2){
+                $doctor = $user->doctor_profile()->find();
+                return json(['succ' => 1,'token' => $token, 'data' => $user, 'doctor_id' => $doctor['id']]);
+            }
+            else
+                return json(['succ' => 1,'token' => $token, 'data' => $user]);
         }else{
             Util::log_attempt($request,'LOGIN',0, $user_identifier);
             $msg = '登录失败， 还剩'. ($max_login_attempt - $count - 1) .'次尝试机会';

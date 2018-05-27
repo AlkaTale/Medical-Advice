@@ -25,7 +25,13 @@ class User extends Controller{
         //检查登录状态
         $msg = Util::token_validate($data['token']);
         if($msg->succ){
-            return json(['succ' => 1, 'data' => $msg->msg]);
+            $user = $msg->msg;
+            if($user->type_id == 2){
+                $doctor = $user->doctor_profile()->find();
+                return json(['succ' => 1,'data' => $user, 'doctor_id' => $doctor['id']]);
+            }
+            else
+                return json(['succ' => 1, 'data' => $user]);
         }
         else
             return json(['succ' => 0, 'error' => $msg->msg]);

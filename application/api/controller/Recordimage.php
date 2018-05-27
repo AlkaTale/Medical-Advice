@@ -25,12 +25,19 @@ class Recordimage extends Controller{
         $data = $request->param();
         $data['create_time'] = date("Y-m-d H:i:s");
 
-        $msg = Util::token_validate($data['token'],$data['profile_id']);
+        try{
+            $msg = Util::token_validate($data['token'],$data['profile_id']);
+        }catch (\Exception $e){
+            return json(['succ' => 0, 'error' => '参数错误']);
+        }
+
         if($msg->succ){
             $profile = $msg->msg;
             $record = $profile->medical_records()->where('id',$data['record_id'])->find();
             if($record){
                 $results = Util::upload($request);
+                if(false == $results)
+                    return json(['succ' => 0, 'error' => '未选择文件']);
                 foreach ($results as $result){
                     if (false !== $result->succ){
                         $data['link'] = $result->msg;
