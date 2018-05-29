@@ -7,6 +7,8 @@
  */
 namespace app\api\controller;
 
+use app\api\model\MedicalRecord as MedicalRecordModel;
+use app\api\model\DoctorProfile as DoctorProfileModel;
 use app\api\model\Order as OrderModel;
 use app\api\model\OrderMrecord;
 use think\Controller;
@@ -181,6 +183,56 @@ class Order extends Controller{
                 return json(['succ' => 1]);
             else
                 return json(['succ' => 0, 'error' => '删除失败']);
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
+        }
+    }
+
+    /*
+    * 生成线上咨询记录（病历）
+    * 接口地址：api/order/createcase
+    * 参数：token,profile_id,order_id
+    */
+    public function createcase(Request $request)
+    {
+        $data = $request->param();
+
+        $msg = Util::token_validate($data['token'],$data['profile_id']);
+        if($msg->succ){
+            $order = Db::name('order')
+                ->where([
+                    'id' => ['=', $data['order_id']],
+                    'case_flag' => ['=', 0],
+                    'status' => [['=',5],['=',4],'or']               //todo:待评价/已完成
+                ])
+                ->find();
+            $doctor = DoctorProfileModel::get(['id' => $order['doctor_id']]);
+
+            if($order){
+                $case = [];
+                $case['profile_id'] = $order['profile_id'];
+                $case['type'] = 2;
+                $case['visit_time'] = $order['appointment_date'];
+                $case['hospital'] = '【线上咨询】医生：'.$doctor['name'];
+                $case['description'] = '患者描述：'.$order['disease_input'].'；医生建议：'.$order['advice'];
+                $case['create_time'] = date("Y-m-d H:i:s");
+
+                $result = MedicalRecordModel::create($case);
+                if ($result){
+                    Db::name('order')
+                        ->where([
+                            'id' => ['=', $data['order_id']],
+                        ])
+                        ->update(['case_flag' => 1]);;
+                    return json(['succ' => 1]);
+                }
+
+                else
+                    return json(['succ' => 0, 'error' => '生成记录失败']);
+            }
+            else
+                return json(['succ' => 0, 'error' => '订单不存在或记录已生成']);
         }
         else{
             return json(['succ' => 0, 'error' => $msg->msg]);

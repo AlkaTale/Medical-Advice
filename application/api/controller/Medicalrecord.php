@@ -114,7 +114,7 @@ class Medicalrecord extends Controller{
             if($msg->succ){
                 $profile = UserProfile::get(['id' => $data['profile_id']]);
                 try{
-                    $list = $profile->medical_records()->selectOrFail();
+                    $list = $profile->medical_records()->where('type','=',1)->select();
                     return json(['succ' => 1, 'data' => $list]);
                 }catch (\Exception $e){
                     return json(['succ' => 0, 'error' => '暂无病历']);
@@ -123,6 +123,52 @@ class Medicalrecord extends Controller{
             else{
                 return json(['succ' => 0, 'error' => $msg->msg]);
             }
+        }
+    }
+
+    /*
+     * 查询咨询记录
+     * 接口地址：api/Medicalrecord/order
+     * 参数：token,profile_id
+     */
+    public function order(Request $request){
+        $data = $request->param();
+
+        $msg = Util::token_validate($data['token']);
+        if($msg->succ){
+            $profile = UserProfile::get(['id' => $data['profile_id']]);
+            try{
+                $list = $profile->medical_records()->where('type','=',2)->select();
+                return json(['succ' => 1, 'data' => $list]);
+            }catch (\Exception $e){
+                return json(['succ' => 0, 'error' => '暂无病历']);
+            }
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
+        }
+    }
+
+    /*
+     * 查询全部记录
+     * 接口地址：api/Medicalrecord/all
+     * 参数：token,profile_id
+     */
+    public function all(Request $request){
+        $data = $request->param();
+
+        $msg = Util::token_validate($data['token']);
+        if($msg->succ){
+            $profile = UserProfile::get(['id' => $data['profile_id']]);
+            try{
+                $list = $profile->medical_records()->select();
+                return json(['succ' => 1, 'data' => $list]);
+            }catch (\Exception $e){
+                return json(['succ' => 0, 'error' => '暂无病历']);
+            }
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
         }
     }
 }

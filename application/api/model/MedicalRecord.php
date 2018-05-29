@@ -7,7 +7,7 @@ use think\Model;
 class MedicalRecord extends Model{
 
     protected $field = [
-        'visit_time','hospital','description','profile_id','create_time'
+        'visit_time','hospital','description','profile_id','create_time','type'
     ];
 
     public function user_profile()
