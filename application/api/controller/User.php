@@ -103,6 +103,65 @@ class User extends Controller{
             return json(['succ' => 0, 'error' => $msg->msg]);
     }
 
+
+    /*
+     * 更改密码
+     * 接口地址：api/User/changepwd
+     * 参数：token,password,new_pwd
+     */
+    public function changepwd(Request $request){
+        $data = $request->param();
+
+        $msg = Util::token_validate($data['token']);
+        $password = md5(md5($data['password']));
+        $new_pwd = md5(md5($data['new_pwd']));
+
+        if($msg->succ){
+            $user = Db::name('user')
+                ->where([
+                    'password' => ['=', $password],
+                ])
+                ->find();
+            if ($user){
+                $result = Db::name('user')
+                    ->where('id', $user['id'])
+                    ->update(['password' => $new_pwd]);
+                if ($result)
+                    return json(['succ' => 1]);
+                else
+                    return json(['succ' => 0,'error' => '修改失败']);
+            }
+            else
+                return json(['succ' => 0,'error' => '原密码不正确']);
+        }
+        else
+            return json(['succ' => 0, 'error' => $msg->msg]);
+    }
+
+    /*
+     * 找回密码
+     * 接口地址：api/User/findpwd
+     * 参数：phone,password,code
+     */
+    public function findpwd(Request $request){
+        $data = $request->param();
+
+        //验证code是否正确
+        $code_msg = $this->validate_code($data['phone'],'FINDPWD',$data['code']);
+        if (true != $code_msg->succ)
+            return json(['succ' => 0,'error' => $code_msg->msg]);
+
+        $password = md5(md5($data['password']));
+
+        $result = Db::name('user')
+            ->where('phone', $data['phone'])
+            ->update(['password' => $password]);
+
+        if ($result)
+            return json(['succ' => 1]);
+        else
+            return json(['succ' => 0,'error' => '密码修改失败']);
+    }
     /*
     * 验证code
     */

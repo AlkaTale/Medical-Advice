@@ -53,6 +53,16 @@ class Smscode extends Controller{
             if ($user != null)
                 return json(['succ' => 0,'error' => '换绑手机号已被其他账号绑定']);
         }
+        elseif ($data['action'] == 'FINDPWD'){
+            $phone = $data['phone'];
+            $user = Db::name('user')
+                ->where([
+                    'phone' => ['=', $phone],
+                ])
+                ->find();
+            if (!$user)
+                return json(['succ' => 0,'error' => '账号不存在']);
+        }
         else
             return json(['succ' => 0,'error' => '参数错误']);
 
@@ -68,6 +78,6 @@ class Smscode extends Controller{
         if ($response->Code == "OK")
             return json(['succ' => 1,'msg' => '发送成功']);
         else
-            return json(['succ' => 0,'msg' => '发送失败']);
+            return json(['succ' => 0,'error' => '发送失败']);
     }
 }
