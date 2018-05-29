@@ -118,7 +118,8 @@ class Order extends Controller{
                     ->view('order_status',['status'],'order_status.id = order.status')
                     ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
                     ->where([
-                        'order.profile_id' => ['=',$data['profile_id']]
+                        'order.profile_id' => ['=',$data['profile_id']],
+                        'order.status' => ['>',-1]
                     ])
                     ->order('create_time','desc')
                     ->select();
@@ -136,11 +137,56 @@ class Order extends Controller{
      * 参数：token,profile_id,order_id
      */
 
+    public function cancel(Request $request)
+    {
+        $data = $request->param();
+
+        $msg = Util::token_validate($data['token'],$data['profile_id']);
+        if($msg->succ){
+            $result = Db::name('order')
+                ->where([
+                    'id' => ['=', $data['order_id']],
+                    'status' => ['=','0']               //todo:待付款
+                ])
+                ->update(['status' => '6']); //todo:已取消
+            if(false!=$result)
+                return json(['succ' => 1]);
+            else
+                return json(['succ' => 0, 'error' => '取消失败']);
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
+        }
+    }
+
+
     /*
     * 删除订单
     * 接口地址：api/order/delete
     * 参数：token,profile_id,order_id
     */
+    public function delete(Request $request)
+    {
+        $data = $request->param();
+
+        $msg = Util::token_validate($data['token'],$data['profile_id']);
+        if($msg->succ){
+            $result = Db::name('order')
+                ->where([
+                    'id' => ['=', $data['order_id']],
+                    'status' => ['=','6']               //todo:已取消
+                ])
+                ->update(['status' => '-1']);
+            if(false!=$result)
+                return json(['succ' => 1]);
+            else
+                return json(['succ' => 0, 'error' => '删除失败']);
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
+        }
+    }
+
     public function getDate($day){
         $length = $day - date("w");
         if ($length <= 0)

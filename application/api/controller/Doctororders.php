@@ -85,7 +85,7 @@ class Doctororders extends Controller
                         ->view('time_range',[],'time_range.id = schedule.time_range_id')
                         ->where([
                             'order.doctor_id' => ['=',$doctor_id],
-//                            'order_status.status' => ['=','待咨询'],
+                            'order_status.status' => [['=','待咨询'],['=','待建议'],'or'],
                             'order.appointment_date' => ['=',date('y-m-d')],
                             'time_range.begin' => ['<', date("H:i:s",time())],
                             'time_range.end' => ['>', date("H:i:s",time())]

@@ -127,7 +127,8 @@ class User extends Controller{
             return new ErrMsg(false,'短信验证码未发送');
         else{
             //查询是否过期
-            $temp = date("Y-m-d G:H:s",strtotime("-".$smscode_minute." minutes"));
+            $temp = date("Y-m-d G:H:s",strtotime(time()) - $smscode_minute * 60);
+
             if($code_result['time'] <= $temp){
                 return new ErrMsg(false,'短信验证码已过期');
             }

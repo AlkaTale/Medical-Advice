@@ -27,7 +27,7 @@ class Util{
         if($user){
             //验证token是否过期
             if($user->token_valid_time != 0){
-                $temp = date("Y-m-d G:H:s",strtotime("-".$user->token_valid_time." minutes"));
+                $temp = date("Y-m-d G:H:s",strtotime(time()) - $user->token_valid_time * 60);
                 if($user->token_create_time <= $temp){
                     return new ErrMsg(false,'登录已过期');
                 }
@@ -126,5 +126,45 @@ class Util{
             ->whereTime('time', '>', '-'.$minute.' minutes')
             ->count();
         return $count;
+    }
+
+    /**
+     * 发送HTTP请求方法
+     * @param  string $url    请求URL
+     * @param  array  $params 请求参数
+     * @param  string $method 请求方法GET/POST
+     * @return array  $data   响应数据
+     */
+    public static function http($url, $params, $method = 'GET', $header = array(), $multi = false){
+        $opts = array(
+            CURLOPT_TIMEOUT        => 30,
+            CURLOPT_RETURNTRANSFER => 1,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_HTTPHEADER     => $header
+        );
+        /* 根据请求类型设置特定参数 */
+        switch(strtoupper($method)){
+            case 'GET':
+                $opts[CURLOPT_URL] = $url . '?' . http_build_query($params);
+                break;
+            case 'POST':
+                //判断是否传输文件
+                $params = $multi ? $params : http_build_query($params);
+                $opts[CURLOPT_URL] = $url;
+                $opts[CURLOPT_POST] = 1;
+                $opts[CURLOPT_POSTFIELDS] = $params;
+                break;
+            default:
+                return new ErrMsg(false, '不支持的请求方式！');
+        }
+        /* 初始化并执行curl请求 */
+        $ch = curl_init();
+        curl_setopt_array($ch, $opts);
+        $data  = curl_exec($ch);
+        $error = curl_error($ch);
+        curl_close($ch);
+        if($error) return new ErrMsg(false, '请求发生错误：' . $error);
+        return new ErrMsg(true, $data);
     }
 }
