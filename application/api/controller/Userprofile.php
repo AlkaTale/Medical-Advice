@@ -63,6 +63,10 @@
             }
             else{
                 $data['user_id'] = $msg->msg['id'];
+                $valid_result = $this->validate($data,'UserProfile');
+                if(true !== $valid_result){
+                    return json(['succ' => 0,'error' => $valid_result]);
+                }
                 $result = UserProfileModel::create($data);
 
                 return json(['succ' => 1, 'data' => $result]);//'token' => $token,删除

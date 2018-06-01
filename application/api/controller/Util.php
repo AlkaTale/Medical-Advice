@@ -71,7 +71,7 @@ class Util{
         if(true !=$user->succ || $user->msg->type_id != 3)
             return new ErrMsg(false,'没有权限进行此操作');
         else
-            return new ErrMsg(true,$user);
+            return new ErrMsg(true,$user->msg);
     }
 
     /**
@@ -80,6 +80,7 @@ class Util{
      */
     public static function upload(Request $request)
     {
+        $data = $request->param();
         $files = request()->file();
         if($files == null)
             return false;
@@ -90,7 +91,14 @@ class Util{
             if($info){
                 // 成功上传后 获取上传信息
                 $results[] = new ErrMsg(true,$info->getSavename());
-                //$file->thumb(150, 150)->save('./thumb.png');
+                //保存缩略图
+                $imgpath = ROOT_PATH . 'public' . DS . 'uploads'. DS . $info->getSavename();
+                $image = Image::open($imgpath);
+                $path = ROOT_PATH . 'public' . DS . 'uploads'. DS .date('Ymd');
+                $thumb_name = 'thumb_'.explode(DS,$info->getSavename())[1];
+                $thumb_path = $path. DS .$thumb_name;
+                $image->thumb(200, 200)->save($thumb_path);
+
             }else{
                 // 上传失败获取错误信息
                 $results[] = new ErrMsg(false,$file->getError());

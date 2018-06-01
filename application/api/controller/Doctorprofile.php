@@ -334,7 +334,7 @@ class Doctorprofile extends Controller
         $max = $r_data['max_count'];
 
         $result = Db::name('schedule')
-            ->insert(['doctor_id' => $d_id, 'day' => $day, 'time_range_id' => $range, 'max_count' => $max]);
+            ->insert(['doctor_id' => $d_id, 'day' => $day, 'time_range_id' => $range, 'max_count' => $max, 'number' => $max]);
 
         if ($result)
             return json(['succ' => 1]);
