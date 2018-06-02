@@ -248,7 +248,7 @@ class Evaluation extends Controller
                         $eid = $evaluation['id'];
                         $result =  $result = Db::name('evaluation_reply')
                             ->insert(['eid' => $eid,
-                                'replier' => $user->msg['id'],
+                                'replier' => $user->msg['id'],  //todo:是否应改为使用医生资料ID？
                                 'reply_type' => $user->msg['type_id'],
                                 'reply' => $data['reply'],
                                 'reply_time' => date(date("Y-m-d H:i:s"))
@@ -269,5 +269,97 @@ class Evaluation extends Controller
         }
         else
             return json(['succ' => 0, 'error' => '登录已失效']);
+    }
+
+    /*
+    * 患者查询回复
+    * 接口：api/Evaluation/patient_replylist
+    * 参数：token,oid,profile_id
+    */
+    public function patient_replylist(Request $request){
+        $data = $request->param();
+
+        $msg = Util::token_validate($data['token'],$data['profile_id']);
+        if($msg->succ){
+            $order = Db::name('order')
+                ->where([
+                    'id' => ['=', $data['oid']],
+                    'profile_id' => ['=', $data['profile_id']],
+                ])
+                ->find();
+            if($order){
+                //查询对应的评价和评价回复
+                $evaluation = Db::name('evaluation')
+                    ->where([
+                        'oid' => ['=',$data['oid']]
+                    ])
+                    ->find();
+                if ($evaluation){
+                    $eid = $evaluation['id'];
+                    $results =  Db::view('evaluation_reply','id,eid,replier,reply_type,reply,reply_time')
+                        ->view('user_type',['type'],'user_type.id = evaluation_reply.reply_type')
+                        ->where('eid','=',$eid)
+                        ->order('reply_time')
+                        ->select();
+                    return json(['succ' => 1, 'data' => $results]);
+                }
+                else
+                    return json(['succ' => 0, 'error' => '订单未评价']);
+            }
+            else
+                return json(['succ' => 0, 'error' => '订单不存在或没有权限查看']);
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
+        }
+    }
+
+    /*
+     * 患者回复评价
+     * 接口：api/Evaluation/patient_reply
+     * 参数：token,oid,reply,profile_id
+     */
+    public function patient_reply(Request $request){
+        $data = $request->param();
+
+        $msg = Util::token_validate($data['token'],$data['profile_id']);
+        if($msg->succ){
+            $user = Util::token_validate($data['token'])->msg;
+            $order = Db::name('order')
+                ->where([
+                    'id' => ['=', $data['oid']],
+                    'profile_id' => ['=', $data['profile_id']],
+                ])
+                ->find();
+            if($order){
+                //查询对应的评价和评价回复
+                $evaluation = Db::name('evaluation')
+                    ->where([
+                        'oid' => ['=',$data['oid']]
+                    ])
+                    ->find();
+                if ($evaluation){
+                    $eid = $evaluation['id'];
+                    $result =  $result = Db::name('evaluation_reply')
+                        ->insert(['eid' => $eid,
+                            'replier' => $user['id'],   //todo:是否应改为使用患者资料ID？
+                            'reply_type' => $user['type_id'],
+                            'reply' => $data['reply'],
+                            'reply_time' => date(date("Y-m-d H:i:s"))
+                        ]);
+                    if($result)
+                        return json(['succ' => 1]);
+                    else
+                        return json(['succ' => 0, 'error' => '回复失败']);
+                }
+                else
+                    return json(['succ' => 0, 'error' => '订单未评价']);
+            }
+            else
+                return json(['succ' => 0, 'error' => '订单不存在或没有权限查看']);
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
+        }
     }
 }

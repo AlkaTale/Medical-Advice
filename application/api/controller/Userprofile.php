@@ -9,6 +9,7 @@
     use app\api\model\User;
     use think\Controller;
     use think\Request;
+    use think\Db;
 
 
     class Userprofile extends Controller{
@@ -62,6 +63,16 @@
                 return json(['succ' => 0,'error' => $msg->msg]);
             }
             else{
+                //1、查询该类型最大数量
+                $result = Db::name('user_type')
+                    ->where('id', '=', $msg->msg->type_id)
+                    ->find();
+                $max_count = $result['max_count'];
+                //2、判断是否已超出最大数量
+                $list = $msg->msg->user_profiles()->select();
+                if (sizeof($list) >= $max_count)
+                    return json(['succ' => 0,'error' => '患者资料超过上限']);
+
                 $data['user_id'] = $msg->msg['id'];
                 $valid_result = $this->validate($data,'UserProfile');
                 if(true !== $valid_result){

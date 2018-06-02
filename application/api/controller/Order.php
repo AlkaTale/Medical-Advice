@@ -148,6 +148,7 @@ class Order extends Controller{
             $result = Db::name('order')
                 ->where([
                     'id' => ['=', $data['order_id']],
+                    'profile_id' => ['=', $data['profile_id']],
                     'status' => ['=','0']               //todo:待付款
                 ])
                 ->update(['status' => '6']); //todo:已取消
@@ -176,6 +177,7 @@ class Order extends Controller{
             $result = Db::name('order')
                 ->where([
                     'id' => ['=', $data['order_id']],
+                    'profile_id' => ['=', $data['profile_id']],
                     'status' => ['=','6']               //todo:已取消
                 ])
                 ->update(['status' => '-1']);
@@ -203,6 +205,7 @@ class Order extends Controller{
             $order = Db::name('order')
                 ->where([
                     'id' => ['=', $data['order_id']],
+                    'profile_id' => ['=', $data['profile_id']],
                     'case_flag' => ['=', 0],
                     'status' => [['=',5],['=',4],'or']               //todo:待评价/已完成
                 ])
