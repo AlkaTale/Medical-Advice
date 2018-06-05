@@ -223,8 +223,8 @@ class User extends Controller{
             if($results[0]->succ){
                 //根据参数裁剪原图
                 $image = Image::open('./public/uploads/'.$results[0]->msg);
-                //解析参数
-                $avatar_data = json_decode($data['avatar_data']);
+                //解析参数,参数被框架转码，需要解码
+                $avatar_data = json_decode(htmlspecialchars_decode($data['avatar_data']));
                 $image->crop($avatar_data->height,$avatar_data->width,$avatar_data->x,$avatar_data->y);
                 $image->rotate($avatar_data->rotate);
                 //保存裁剪后图片
