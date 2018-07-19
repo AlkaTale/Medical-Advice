@@ -20,7 +20,7 @@ class Department extends Controller{
      * 参数：
      */
     public function index(){
-        $result = Db::name('department')->field('id,name')->select();
+        $result = Db::name('department')->field('id,name')->cache()->select();
         return json(['succ' => 1, 'data' => $result]);
     }
 

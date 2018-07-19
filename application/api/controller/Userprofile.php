@@ -27,8 +27,10 @@
                 //验证token
                 $msg = Util::token_validate($data['token'],$data['profile_id']);
                 if($msg->succ){
-                    $profile = $msg->msg;
-                    return json(['succ' => 1, 'data' => $profile]);
+//                    $profile = $msg->msg;
+                    $qstring = "call query_user_profile({$data['profile_id']},-1)";
+                    $result = Db::query($qstring);
+                    return json(['succ' => 1, 'data' => $result[0]]);
                 }
                 else{
                     return json(['error' => $msg->msg]);
@@ -40,8 +42,10 @@
                 $msg = Util::token_validate($data['token']);
                 if($msg->succ){
                     $user = $msg->msg;
-                    $list = $user->user_profiles()->selectOrFail();
-                    return json(['succ' => 1, 'data' => $list]);
+//                    $list = $user->user_profiles()->selectOrFail();
+                    $qstring = "call query_user_profile(0,{$user['id']})";
+                    $result = Db::query($qstring);
+                    return json(['succ' => 1, 'data' => $result[0]]);
                 }
                 else{
                     return json(['error' => $msg->msg]);
@@ -78,9 +82,10 @@
                 if(true !== $valid_result){
                     return json(['succ' => 0,'error' => $valid_result]);
                 }
-                $result = UserProfileModel::create($data);
-
-                return json(['succ' => 1, 'data' => $result]);//'token' => $token,删除
+//                $result = UserProfileModel::create($data)
+                $qstring = "call insert_user_profile('{$data['name']}',{$data['sex']},'{$data['birth']}','{$data['address']}','{$data['phone']}',{$data['user_id']})";
+                Db::query($qstring);
+                return json(['succ' => 1/*, 'data' => $result*/]);//'token' => $token,删除
             }
         }
         /*
@@ -120,10 +125,17 @@
                 if (Util::token_validate($data['token'], $data['profile_id'])) {
                     $user = UserProfileModel::get(['id' => $data['profile_id']]);
                     if ($user) {
-                        if(false != $user->allowField(['name','birth','sex','address','phone'])->save($_POST))
+                        $valid_result = $this->validate($data,'UserProfile');
+                        if(true !== $valid_result){
+                            return json(['succ' => 0,'error' => $valid_result]);
+                        }
+                        $qstring = "call update_user_profile({$data['profile_id']},'{$data['name']}',{$data['sex']},'{$data['birth']}','{$data['address']}','{$data['phone']}')";
+                        Db::query($qstring);
+
+//                        if(false != $user->allowField(['name','birth','sex','address','phone'])->save($_POST))
                             return json(['succ' => 1]);
-                        else
-                            return json(['succ' => 0]);
+//                        else
+//                            return json(['succ' => 0]);
                     }else
                         return json(['succ' => 0, 'error' => '子用户不存在']);
 
