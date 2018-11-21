@@ -10,11 +10,10 @@ namespace app\api\model;
 use think\Model;
 use think\Db;
 
-//病历图片模型类
 class Order extends Model{
 
     protected $field = [
-        'profile_id','doctor_id','appointment_date','appointment_time',
+        'profile_id','username','doctor_id','appointment_date','appointment_time','str_time',
         'price','create_time','disease_input','code'
     ];
 }

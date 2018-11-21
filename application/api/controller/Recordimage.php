@@ -55,6 +55,52 @@ class Recordimage extends Controller{
     }
 
     /*
+     * 上传
+     * 调用：api/Recordimage/upload
+     * 参数：image,profile_id,token,record_id,type_id
+     */
+    public function upload1(Request $request){
+        $data = $request->param();
+        $data['create_time'] = date("Y-m-d H:i:s");
+
+        try{
+            $msg = Util::token_validate($data['token'],$data['profile_id']);
+        }catch (\Exception $e){
+            return json(['succ' => 0, 'error' => '参数错误']);
+        }
+
+        if($msg->succ){
+            $profile = $msg->msg;
+            $record = $profile->medical_records()->where('id',$data['record_id'])->find();
+            if($record){
+
+                //调用公共函数保存原图
+                $results = Util::upload($request);
+                if($results[0]->succ){
+                    //根据参数裁剪原图
+                    $image = Image::open('./public/uploads/'.$results[0]->msg);
+                    //解析参数,参数被框架转码，需要解码
+                    $image->crop($data['h'],$data['w'],$data['x'],$data['y']);
+                    //保存裁剪后图片
+                    $image->save(ROOT_PATH . 'public/uploads/' . $results[0]->msg);
+                    //保存到数据库
+                    $data['link'] = $results[0]->msg;
+                    RecordImageModel::create($data);
+                    return json(['succ' => 0, 'result' => $results[0]->msg]);
+                }
+                else{
+                    return json(['succ' => 0, 'error' => $results[0]->msg]);
+                }
+            }
+            else
+                return json(['succ' => 0, 'error' => '病历不存在']);
+        }
+        else{
+            return json(['succ' => 0, 'error' => $msg->msg]);
+        }
+    }
+
+    /*
      * 查询
      * 调用：api/Recordimage/
      * 参数：profile_id,token,record_id

@@ -24,6 +24,13 @@ class Department extends Controller{
         return json(['succ' => 1, 'data' => $result]);
     }
 
+    public function sortlist(){
+        $data = Db::name('department')->field('id,name')->cache()->select();
+        $data = (new Character)->groupByInitials($data, 'name');
+        return json(['succ' => 1, 'data' => $data]);
+
+    }
+
     public function detaillist(){
         $result = Db::name('department')->select();
         return json(['succ' => 1, 'data' => $result]);

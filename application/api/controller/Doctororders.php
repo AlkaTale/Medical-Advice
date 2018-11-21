@@ -37,12 +37,12 @@ class Doctororders extends Controller
                 //flag = 1, 查询成功完成的订单
                 //todo:分页
                 if($data['flag'] == 1){
-                    $orders =  Db::view('order','id,profile_id,appointment_date,price')
+                    $orders =  Db::view('order','id,profile_id,appointment_date,price,status')
                         ->view('user_profile',['name','sex','birth'],'order.profile_id = user_profile.id')
-                        ->view('order_status',['status'],'order_status.id = order.status')
+//                        ->view('order_status',['status'],'order_status.id = order.status')
                         ->where([
                             'order.doctor_id' => ['=',$doctor_id],
-                            'order_status.status' => [['=','已完成'],['=','待评价'],'or']
+                            'order.status' => [['=','已完成'],['=','待评价'],'or']
                         ])
                         ->select();
                     return json(['succ' => 1, 'data' => $orders]);
@@ -51,12 +51,12 @@ class Doctororders extends Controller
                 //flag = 2, 查询待给出咨询意见的订单
                 //todo:分页
                 elseif ($data['flag'] == 2){
-                    $orders =  Db::view('order','id,profile_id,appointment_date,price')
+                    $orders =  Db::view('order','id,profile_id,appointment_date,price,status')
                         ->view('user_profile',['name','sex','birth'],'order.profile_id = user_profile.id')
-                        ->view('order_status',['status'],'order_status.id = order.status')
+//                        ->view('order_status',['status'],'order_status.id = order.status')
                         ->where([
                             'order.doctor_id' => ['=',$doctor_id],
-                            'order_status.status' => ['=','待建议']
+                            'order.status' => ['=','待建议']
                         ])
                         ->select();
                     return json(['succ' => 1, 'data' => $orders]);
@@ -64,12 +64,12 @@ class Doctororders extends Controller
 
                 //flag = 0, 按日期查询已付款未咨询的订单
                 elseif ($data['flag'] == 0){
-                    $orders =  Db::view('order','id,profile_id,appointment_date,price')
+                    $orders =  Db::view('order','id,profile_id,appointment_date,price,status')
                         ->view('user_profile',['name','sex','birth'],'order.profile_id = user_profile.id')
-                        ->view('order_status',['status'],'order_status.id = order.status')
+//                        ->view('order_status',['status'],'order_status.id = order.status')
                         ->where([
                             'order.doctor_id' => ['=',$doctor_id],
-                            'order_status.status' => ['=','待咨询'],
+                            'order.status' => ['=','待咨询'],
                             'order.appointment_date' => ['=',$data['date']]
                         ])
                         ->select();
@@ -78,14 +78,14 @@ class Doctororders extends Controller
 
                 //flag = 3, 查询当前时间段的订单
                 elseif ($data['flag'] == 3){
-                    $orders =  Db::view('order','id,profile_id,appointment_date,price')
+                    $orders =  Db::view('order','id,profile_id,appointment_date,price,status')
                         ->view('user_profile',['name','sex','birth'],'order.profile_id = user_profile.id')
-                        ->view('order_status',['status'],'order_status.id = order.status')
+//                        ->view('order_status',['status'],'order_status.id = order.status')
                         ->view('schedule',[],'schedule.id = order.appointment_time')
                         ->view('time_range',[],'time_range.id = schedule.time_range_id')
                         ->where([
                             'order.doctor_id' => ['=',$doctor_id],
-                            'order_status.status' => [['=','待咨询'],['=','待建议'],'or'],
+                            'order.status' => [['=','待咨询'],['=','待建议'],'or'],
                             'order.appointment_date' => ['=',date('y-m-d')],
                             'time_range.begin' => ['<', date("H:i:s",time())],
                             'time_range.end' => ['>', date("H:i:s",time())]
@@ -118,11 +118,11 @@ class Doctororders extends Controller
             if ($doctor) {
                 $doctor_id = $doctor['id'];
 
-                $order = Db::view('order','id,appointment_date,disease_input,price,advice,create_time')
+                $order = Db::view('order','id,appointment_date,disease_input,price,advice,create_time,status,str_time')
                     ->view('user_profile',['name' => 'username', 'sex','birth'],'user_profile.id = order.profile_id')
-                    ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
-                    ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
-                    ->view('order_status',['status'],'order_status.id = order.status')
+//                    ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
+//                    ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
+//                    ->view('order_status',['status'],'order_status.id = order.status')
                     ->where([
                         'order.id' => ['=',$data['oid']],
                         'order.doctor_id' => ['=',$doctor_id]
@@ -159,10 +159,10 @@ class Doctororders extends Controller
                 $result = Db::name('order')
                     ->where([
                         'id' => ['=', $data['oid']],
-                        'status' => ['=', '3']  //todo:待建议
+                        'status' => ['=', '待建议']
                     ])
                     ->update([
-                        'status' => '4',  //todo:待评价
+                        'status' => '待评价',
                         'advice' => $data['advice']
                     ]);
 
@@ -240,16 +240,16 @@ class Doctororders extends Controller
                 $result1 = Db::name('order')
                     ->where([
                         'doctor_id' => ['=', $doctor_id],
-                        'status' => ['=','2']               //todo:咨询中
+                        'status' => ['=','咨询中']
                     ])
-                    ->update(['status' => '3']); //todo:待建议
+                    ->update(['status' => '待建议']);
 
                 $order =  Db::view('order','id,profile_id,appointment_date,price')
                     ->view('schedule',[],'schedule.id = order.appointment_time')
                     ->view('time_range',[],'time_range.id = schedule.time_range_id')
                     ->where([
                         'order.doctor_id' => ['=',$doctor_id],
-                        'order.status' => ['=','1'],//todo:待咨询
+                        'order.status' => ['=','待咨询'],
                         'order.appointment_date' => ['=',date('y-m-d')],
                         'time_range.begin' => ['<', date("H:i:s",time())],
                         'time_range.end' => ['>', date("H:i:s",time())]
@@ -261,9 +261,9 @@ class Doctororders extends Controller
                 $result2 = Db::name('order')
                     ->where([
                         'id' => ['=', $order['id']],
-                        'status' => ['=','1']               //todo:待咨询
+                        'status' => ['=','待咨询']
                     ])
-                    ->update(['status' => '2']); //todo:咨询中
+                    ->update(['status' => '咨询中']);
 
                 if (false == $order)
                     return json(['succ' => 0, 'error' => '所有患者已叫号完毕']);

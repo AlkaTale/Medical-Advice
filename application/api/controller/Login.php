@@ -31,7 +31,7 @@ class Login extends Controller{
         if($count >= $max_login_attempt)
             return json(['succ' => 0,'error' => '短时间内登录尝试次数已达上限']);
         
-        //todo:加密保存用户密码，暂用2次MD5，加密应在客户端进行！
+        //todo:加密保存用户密码，暂用2次MD5！
         $password = md5(md5(input('password')));
 
         //通过用户名/手机号登录
@@ -40,11 +40,11 @@ class Login extends Controller{
             'password' => $password
         ]);
         $user_loginbyphone = User::get([
-            'phone' => input('phone'),
+            'phone' => input('username'),
             'password' => $password
         ]);
 
-        $user_identifier = (input('username') == null)?input('phone'):input('username');
+        $user_identifier = ($user_loginbyname == null)?input('phone'):input('username');
 
         //登录成功，读取信息存入session
         if($user_loginbyname || $user_loginbyphone){

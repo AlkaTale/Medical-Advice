@@ -83,7 +83,7 @@
                     return json(['succ' => 0,'error' => $valid_result]);
                 }
 //                $result = UserProfileModel::create($data)
-                $qstring = "call insert_user_profile('{$data['name']}',{$data['sex']},'{$data['birth']}','{$data['address']}','{$data['phone']}',{$data['user_id']})";
+                $qstring = "call insert_user_profile('{$data['name']}',{$data['sex']},'{$data['birth']}','{$data['address']}','{$data['phone']}',{$data['user_id']},{$data['relation']})";
                 Db::query($qstring);
                 return json(['succ' => 1/*, 'data' => $result*/]);//'token' => $token,删除
             }
@@ -129,13 +129,16 @@
                         if(true !== $valid_result){
                             return json(['succ' => 0,'error' => $valid_result]);
                         }
-                        $qstring = "call update_user_profile({$data['profile_id']},'{$data['name']}',{$data['sex']},'{$data['birth']}','{$data['address']}','{$data['phone']}')";
-                        Db::query($qstring);
 
-//                        if(false != $user->allowField(['name','birth','sex','address','phone'])->save($_POST))
+                        $user->name = $data['name'];
+                        $user->birth = $data['birth'];
+                        $user->sex = $data['sex'];
+                        $user->relation = $data['relation'];
+
+                        if(false != $user->allowField(['name','birth','sex','address','relation'])->save($_POST))
                             return json(['succ' => 1]);
-//                        else
-//                            return json(['succ' => 0]);
+                        else
+                            return json(['succ' => 0]);
                     }else
                         return json(['succ' => 0, 'error' => '子用户不存在']);
 
@@ -144,5 +147,30 @@
                 }
 
             }
+        public function update_phone(Request $request)
+        {
+            $data = $request->param();//
+            //验证token
+            if (Util::token_validate($data['token'], $data['profile_id'])) {
+                $user = UserProfileModel::get(['id' => $data['profile_id']]);
+                if ($user) {
+                    $valid_result = $this->validate($data,'UserProfile');
+                    if(true !== $valid_result){
+                        return json(['succ' => 0,'error' => $valid_result]);
+                    }
+                    $qstring = "call update_user_profile({$data['profile_id']},'{$data['name']}',{$data['sex']},'{$data['birth']}','{$data['address']}','{$data['phone']}')";
+                    Db::query($qstring);
 
+//                        if(false != $user->allowField(['name','birth','sex','address','phone'])->save($_POST))
+                    return json(['succ' => 1]);
+//                        else
+//                            return json(['succ' => 0]);
+                }else
+                    return json(['succ' => 0, 'error' => '子用户不存在']);
+
+            } else {
+                return json(['error' => '登录已失效']);
+            }
+
+        }
     }

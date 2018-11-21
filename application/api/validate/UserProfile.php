@@ -14,6 +14,6 @@ class UserProfile extends Validate
 // 验证规则
     protected $rule = [
         ['name' , 'require', '姓名必须'],
-        ['phone', 'require|/^1[34578]\d{9}$/', '手机号必须|手机号格式错误'],
+//        ['phone', 'require|/^1[34578]\d{9}$/', '手机号必须|手机号格式错误'],
     ];
 }

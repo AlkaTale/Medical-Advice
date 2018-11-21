@@ -31,18 +31,21 @@ class Stat extends Controller
             $date = $data['date'];
             $result = Db::name('stat_order_count')
                 ->where('date', '=', $date)
+                ->cache()
                 ->find();
         }
         elseif ($flag == 1){
             $result = Db::name('stat_order_count')
                 ->whereTime('date', '>=', date('Y-m-d', strtotime('-7 days')))
                 ->order('date')
+                ->cache()
                 ->select();
         }
         elseif ($flag == 2){
             $result = Db::name('stat_order_count')
                 ->whereTime('date', '>=', date('Y-m-d', strtotime('-30 days')))
                 ->order('date')
+                ->cache()
                 ->select();
         }
         elseif ($flag == 3){
@@ -51,6 +54,7 @@ class Stat extends Controller
                 SUM(cancel_orders) as cancel_orders,SUM(complaint_orders) as complaint_orders')
                 ->group('date_format(date, \'%Y-%m\')')
                 ->order('date_format(date, \'%Y-%m\')')
+                ->cache()
                 ->select();
         }
         else
@@ -161,6 +165,23 @@ class Stat extends Controller
             ])
 //            ->limit(20)
             ->order('department_id')
+            ->cache()
+            ->select();
+
+        return json(['succ' => 1,'data' => $result]);
+    }
+
+    //返回有数据的月份
+    public function depmonth(Request $request){
+        $data = $request->param();
+        //管理员权限验证
+        $admin = Util::admin_validate($data['token']);
+        if(true !=$admin->succ)
+            return json(['succ' => 0,'error' => $admin->msg]);
+
+        $result = Db::name('stat_department')
+            ->field('distinct date_format(date, \'%Y-%m\') as date')
+            ->order('date','desc')
             ->cache()
             ->select();
 

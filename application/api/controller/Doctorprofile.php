@@ -225,6 +225,81 @@ class Doctorprofile extends Controller
     }
 
     /*
+    * 医生列表查询
+    * 接口地址：api/Doctorprofile/doctorlist
+    * 参数：dep_id
+    * todo:分页
+    */
+    public function doctorlist(Request $request)
+    {
+        $result = [];
+        $r_data = $request->param();
+        $d_id = $r_data['dep_id'];
+//        $page = $r_data['page'];
+        if($d_id == 0){
+            $dp_list =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+                ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
+                ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+//                ->page($page)
+//                ->limit(10)
+                ->select();
+//            $count = Db::view('doctor_profile','id,name,department_id,introduction,photo,type')->count();
+        }
+        else{
+            $dp_list =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+                ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
+                ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+                ->where('department_id','=',$d_id)
+//                ->page($page)
+//                ->limit(10)
+                ->select();
+//            $count = Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+//                ->where('department_id','=',$d_id)
+//                ->count();
+        }
+//        foreach ($dp_list as $dp){
+//            $time_list = Db::view('schedule','id,doctor_id,day,number')
+//                ->view('time_range',['range','flag'],'schedule.time_range_id = time_range.id')
+//                ->where([
+//                    'doctor_id' => ['=',$dp['id']],
+//                    'schedule.status' => ['=',1]
+//                ])
+//                ->select();
+//            $dp['time_list'] = $time_list;
+//            $result[] = $dp;
+//        }
+//        return json(['count' => $count/10 + 1, 'data' => $result]);
+        return json(['succ' => 1, 'data' => $dp_list]);
+
+    }
+
+    /*
+    * 医生列表搜索
+    * 接口地址：api/Doctorprofile/search
+    * 参数：keyword
+    * todo:分页
+    */
+    public function search(Request $request)
+    {
+        $r_data = $request->param();
+        $keyword = $r_data['keyword'];
+//        $page = $r_data['page'];
+        if(sizeof($keyword) > 0){
+            $dp_list =  Db::view('doctor_profile','id,name,department_id,introduction,photo,type')
+                ->view('doctor_type',['type'=>'typename','price'],'doctor_profile.type = doctor_type.id')
+                ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
+                ->where('name','like','%'.$keyword.'%')
+//                ->page($page)
+                ->limit(10)
+                ->select();
+            return json(['succ' => 1, 'data' => $dp_list]);
+        }
+        else{
+            return json(['succ' => 0, 'error' => "没有符合的结果"]);
+        }
+    }
+
+    /*
     * 单个医生一周排班查询
     * 接口地址：api/Doctorprofile/weekduty
     * 参数：doctor_id

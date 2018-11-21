@@ -30,10 +30,14 @@ class Order extends Controller{
         $s_id = $data['appointment_time'];
 
         //检查人数是否已满
-        $s_result = Db::name('schedule')->where('id','=',$s_id)->find();
+        $s_result = Db::view('schedule','number,status,doctor_id,day')
+            ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
+            ->where('schedule.id','=',$s_id)
+            ->find();
         if ($s_result['number'] <= 0 || $s_result['status'] != 1){
             return json(['succ' => 0, 'error' => '预约失败，该时间段人数已满']);
         }
+        $data['str_time'] = $s_result['range'];
         $data['doctor_id'] = $s_result['doctor_id'];
         $data['appointment_date'] = $this->getDate($s_result['day']);
         //查询价格
@@ -48,6 +52,7 @@ class Order extends Controller{
 
         $msg = Util::token_validate($data['token'],$data['profile_id']);
         if($msg->succ){
+            $data['username'] = $msg->msg->name;
             $result = OrderModel::create($data);
             if($result){
                 //病历
@@ -89,39 +94,41 @@ class Order extends Controller{
         $msg = Util::token_validate($data['token'],$data['profile_id']);
         if($msg->succ){
             if($o_id > 0){
-                $order = Db::view('order','id,profile_id,appointment_date,disease_input,price,advice,create_time,code')
-                    ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
-                    ->view('doctor_profile',['name' => 'doctorname','live_link'],'doctor_profile.id = order.doctor_id')
-                    ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
+                    $order = Db::view('order','id,profile_id,appointment_date,disease_input,price,advice,create_time,code,status,str_time,username')
+                    //                    ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
+                    ->view('doctor_profile',['name' => 'doctorname','live_link','photo'],'doctor_profile.id = order.doctor_id')
+//                    ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
                     ->view('doctor_type',['type'=>'typename'],'doctor_profile.type = doctor_type.id')
-                    ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
-                    ->view('order_status',['status'],'order_status.id = order.status')
+//                    ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
+//                    ->view('order_status',['status'],'order_status.id = order.status')
                     ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
                     ->where([
                         'order.id' => ['=',$o_id],
                         'order.profile_id' => ['=',$data['profile_id']]
                     ])
+//                    ->cache('od')
                     ->find();
 
                 $cases = Db::view('medical_record','id,visit_time,hospital,description,profile_id')
                     ->view('order_mrecord',['order_id'],'order_mrecord.record_id = medical_record.id')
                     ->where('order_mrecord.order_id','=',$order['id'])
+//                    ->cache('case')
                     ->select();
                 $order['cases'] = $cases;
                 return json(['succ' => 1 ,'data' => $order]);
             }
             else{
-                $order = Db::view('order','id,profile_id,appointment_date,disease_input,price,advice,create_time,code')
-                    ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
-                    ->view('doctor_profile',['name' => 'doctorname'],'doctor_profile.id = order.doctor_id')
+                $order = Db::view('order','id,profile_id,appointment_date,disease_input,price,advice,create_time,code,status,str_time,username')
+//                    ->view('user_profile',['name' => 'username'],'user_profile.id = order.profile_id')
+                    ->view('doctor_profile',['name' => 'doctorname','photo'],'doctor_profile.id = order.doctor_id')
                     ->view('doctor_type',['type'=>'typename'],'doctor_profile.type = doctor_type.id')
-                    ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
-                    ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
-                    ->view('order_status',['status'],'order_status.id = order.status')
+//                    ->view('schedule',['time_range_id'],'schedule.id = order.appointment_time')
+//                    ->view('time_range',['range'],'time_range.id = schedule.time_range_id')
+//                    ->view('order_status',['status'],'order_status.id = order.status')
                     ->view('department',['name'=>'department'],'department.id = doctor_profile.department_id')
                     ->where([
                         'order.profile_id' => ['=',$data['profile_id']],
-                        'order.status' => ['>',-1]
+                        'order.status' => ['<>','已删除']
                     ])
                     ->order('create_time','desc')
                     ->select();
@@ -149,9 +156,9 @@ class Order extends Controller{
                 ->where([
                     'id' => ['=', $data['order_id']],
                     'profile_id' => ['=', $data['profile_id']],
-                    'status' => ['=','0']               //todo:待付款
+                    'status' => ['=','待支付']
                 ])
-                ->update(['status' => '6']); //todo:已取消
+                ->update(['status' => '已取消']);
             if(false!=$result)
                 return json(['succ' => 1]);
             else
@@ -178,9 +185,9 @@ class Order extends Controller{
                 ->where([
                     'id' => ['=', $data['order_id']],
                     'profile_id' => ['=', $data['profile_id']],
-                    'status' => ['=','6']               //todo:已取消
+                    'status' => ['=','已取消']
                 ])
-                ->update(['status' => '-1']);
+                ->update(['status' => '已删除']);
             if(false!=$result)
                 return json(['succ' => 1]);
             else
@@ -207,7 +214,7 @@ class Order extends Controller{
                     'id' => ['=', $data['order_id']],
                     'profile_id' => ['=', $data['profile_id']],
                     'case_flag' => ['=', 0],
-                    'status' => [['=',5],['=',4],'or']               //todo:待评价/已完成
+                    'status' => [['=','待评价'],['=','已完成'],'or']              
                 ])
                 ->find();
             $doctor = DoctorProfileModel::get(['id' => $order['doctor_id']]);

@@ -22,7 +22,7 @@ class Util{
      * 返回值:true（通过）、string（错误信息）
      */
     public static function token_validate($token, $profile_id = -1){
-        $user = UserModel::get(['token' => $token]);
+        $user = UserModel::get(['token' => $token],true);
         //验证token是否存在
         if($user){
             //验证token是否过期
@@ -47,6 +47,7 @@ class Util{
                     else
                         return new ErrMsg(false,'患者资料不存在');
                 }
+
 //                else if($user->type_id == 2){
 //                    $profile = $user->doctor_profile()->find();
 //                    if($profile){
@@ -87,7 +88,7 @@ class Util{
         $results = [];
         foreach($files as $file){
             // 移动到框架应用根目录/public/uploads/ 目录下
-            $info = $file->validate(['ext'=>'jpg,png,gif'])->move(ROOT_PATH . 'public' . DS . 'uploads');
+            $info = $file->validate(['ext'=>'jpg,jpeg,gif,png,bmp'])->move(ROOT_PATH . 'public' . DS . 'uploads');
             if($info){
                 // 成功上传后 获取上传信息
                 $results[] = new ErrMsg(true,$info->getSavename());
@@ -193,6 +194,69 @@ class Util{
             //得到当前月的上一个月
             return $fm_forward_month=date("Y-m",$tmp_forwardmonth);
 //        }
+    }
+
+    /**
+     * 清理数据表查询缓存
+     *
+     * 用于解决数据表增删改操作无法刷新查询缓存(特别是cache(true)自动命名的缓存)的问题
+     * 只需在增删改操作成功时,调用clear_table_caching($table);
+     * 即可使对应此表的所有查询缓存失效.
+     *
+     * 默认在模型的add,save,delete,setField等操作中会自动调用
+     *
+     * @param string $table 数据表名称
+     * @since 1.0 <2015-4-30> SoChishun Added;
+     */
+//    function clear_table_caching($table = '') {
+//        $table_caching_keys = F('table_caching_keys');
+//        if (!$table_caching_keys) {
+//            return;
+//        }
+//// 清理指定表的缓存
+//        if ($table) {
+//            if (isset($table_caching_keys[$table])) {
+//                $values = $table_caching_keys[$table];
+//                foreach ($values as $id) {
+//                    S($id, null);
+//                }
+//                unset($table_caching_keys[$table]);
+//                F('table_caching_keys', $table_caching_keys);
+//            }
+//            return;
+//        }
+//// 清理所有表的缓存
+//        foreach ($table_caching_keys as $values) {
+//            foreach ($values as $id) {
+//                S($id, null);
+//            }
+//        }
+//        F('table_caching_keys', null);
+//    }
+//
+//    /**
+//     * 添加缓存键名到数据表查询集合中
+//     *
+//     * 用于提供clear_table_caching()方法的数据调用
+//     *
+//     * 默认在getField,select,find等方法中自动调用
+//     *
+//     * @param string $table 数据表名称
+//     * @param string $id 缓存键名
+//     * @since 1.0 <2015-4-30> SoChishun Added.
+//     */
+//    function log_table_cacheing($table, $id) {
+//        $table_caching_keys = F('table_caching_keys');
+//        if ($table_caching_keys && isset($table_caching_keys[$table]) && in_array($id, $table_caching_keys[$table])) {
+//            return; // 如果已经存在则退出
+//        }
+//        $table_caching_keys[$table][] = $id;
+//        F('table_caching_keys', $table_caching_keys);
+//    }
+
+    function getnews(Request $request){
+        $data = self::http("http://mhos.jiankang51.cn/support/get_info?actionType=cmsInfoFacade&actionCode=getColumnNodeInfo&deepth=1&nodeId=93",[]);
+        return json($data);
     }
 
 }
